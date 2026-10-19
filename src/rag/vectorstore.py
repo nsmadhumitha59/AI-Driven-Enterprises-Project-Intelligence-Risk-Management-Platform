@@ -73,6 +73,19 @@ class ChromaVectorStore(BaseVectorStore):
         )
         logger.info(f"Initialized ChromaDB at {self.persist_directory} [Collection: {self.collection_name}]")
 
+    @property
+    def collection(self):
+        """Ensures active and valid collection reference, recreating or re-fetching if stale."""
+        try:
+            _ = self._collection.count()
+            return self._collection
+        except Exception:
+            self._collection = self._client.get_or_create_collection(
+                name=self.collection_name,
+                metadata={"hnsw:space": "cosine"}
+            )
+            return self._collection
+
     def add_chunks(self, chunks: List[TextChunk], embeddings: List[List[float]]) -> None:
         """
         Inserts or updates text chunks and their embeddings into ChromaDB collection.
@@ -109,7 +122,7 @@ class ChromaVectorStore(BaseVectorStore):
             metadatas.append(meta)
 
         # Batch upsert into Chroma
-        self._collection.upsert(
+        self.collection.upsert(
             ids=ids,
             embeddings=embeddings,
             documents=documents,
@@ -129,7 +142,7 @@ class ChromaVectorStore(BaseVectorStore):
         Returns:
             List of (TextChunk, similarity_score) sorted by score descending.
         """
-        count = self._collection.count()
+        count = self.collection.count()
         if count == 0:
             return []
 
@@ -145,7 +158,7 @@ class ChromaVectorStore(BaseVectorStore):
             query_args["where"] = filters
 
         try:
-            results = self._collection.query(**query_args)
+            results = self.collection.query(**query_args)
         except Exception as e:
             logger.error(f"Error querying ChromaDB: {e}", exc_info=True)
             return []
@@ -192,7 +205,7 @@ class ChromaVectorStore(BaseVectorStore):
     def delete_document(self, document_id: str) -> None:
         """Deletes all chunks belonging to the given document_id."""
         try:
-            self._collection.delete(where={"document_id": document_id})
+            self.collection.delete(where={"document_id": document_id})
             logger.info(f"Deleted vector chunks for document_id={document_id}")
         except Exception as e:
             logger.error(f"Error deleting vectors for document {document_id}: {e}")
@@ -201,7 +214,7 @@ class ChromaVectorStore(BaseVectorStore):
         """Returns collection size and stats."""
         return {
             "collection_name": self.collection_name,
-            "total_chunks_indexed": self._collection.count(),
+            "total_chunks_indexed": self.collection.count(),
             "persist_directory": self.persist_directory
         }
 

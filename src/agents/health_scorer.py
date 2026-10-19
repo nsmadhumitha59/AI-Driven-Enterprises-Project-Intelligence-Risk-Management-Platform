@@ -383,17 +383,21 @@ class ProjectHealthScorer(BaseAgent):
             retrieval_chunks = self.retrieve_context(custom_query=query_context)
 
         if not retrieval_chunks:
+            empty_msg = "No relevant information found in the uploaded documents."
             return ProjectHealthResult(
                 agent_name=self.name,
                 agent_role=self.role,
                 execution_status=AgentExecutionStatus.NO_DATA,
-                overall_health_score=50.0,
-                health_status="At Risk",
-                status_color="#f59e0b",
-                scope_clarity_score=50.0,
-                timeline_risk_score=50.0,
-                blocker_score=50.0,
-                notes="No relevant document chunks found in vector database to compute health scores.",
+                overall_health_score=0.0,
+                health_status="No Documents",
+                status_color="#6b7280",
+                scope_clarity_score=0.0,
+                timeline_risk_score=0.0,
+                blocker_score=0.0,
+                notes=empty_msg,
+                executive_summary=empty_msg,
+                recommendations=[],
+                dimensions=[],
                 execution_time_ms=round((time.perf_counter() - start_time) * 1000, 2)
             )
 

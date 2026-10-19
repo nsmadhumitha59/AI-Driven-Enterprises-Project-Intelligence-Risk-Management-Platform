@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "document_id": "253a0149-5d46-44f5-955d-85cc1bbfcc24",
+    "filename": "sprint_4_blocker_escalation.txt",
+    "original_name": "sprint_4_blocker_escalation.txt",
+    "file_type": "txt",
+    "file_size_bytes": 411,
+    "file_hash": "8de24c2dda92785616496f7a3c67f1f7eee1727b0839a78170e1b8166151fb89",
+    "upload_timestamp": "2026-10-19T15:49:18.803832Z",
+    "page_count": null,
+    "row_count": null,
+    "char_count": 407,
+    "word_count": 58,
+    "chunk_count": 0,
+    "status": "parsed",
+    "error_message": null,
+    "custom_metadata": {
+      "encoding": "utf-8"
+    }
+  },
+  "raw_text": "Sprint 4 Emergency Blocker Escalation Note:\nBLOCKER: Third-party OAuth identity provider API rate limits are blocking automated QA pipelines.\nRISK: Critical security audit deadline scheduled for next Friday with zero test coverage on payment checkout.\nACTION ITEM: John Doe must negotiate OAuth rate limit quota increase by Wednesday.\nDELIVERABLE: Payment Gateway Integration V2 signed off by Security Lead.",
+  "normalized_text": "Sprint 4 Emergency Blocker Escalation Note:\nBLOCKER: Third-party OAuth identity provider API rate limits are blocking automated QA pipelines.\nRISK: Critical security audit deadline scheduled for next Friday with zero test coverage on payment checkout.\nACTION ITEM: John Doe must negotiate OAuth rate limit quota increase by Wednesday.\nDELIVERABLE: Payment Gateway Integration V2 signed off by Security Lead.",
+  "sections": [
+    {
+      "section_index": 0,
+      "section_title": "Section 1",
+      "page_number": null,
+      "row_number": null,
+      "raw_text": "Sprint 4 Emergency Blocker Escalation Note:\nBLOCKER: Third-party OAuth identity provider API rate limits are blocking automated QA pipelines.\nRISK: Critical security audit deadline scheduled for next Friday with zero test coverage on payment checkout.\nACTION ITEM: John Doe must negotiate OAuth rate limit quota increase by Wednesday.\nDELIVERABLE: Payment Gateway Integration V2 signed off by Security Lead.",
+      "normalized_text": "Sprint 4 Emergency Blocker Escalation Note:\nBLOCKER: Third-party OAuth identity provider API rate limits are blocking automated QA pipelines.\nRISK: Critical security audit deadline scheduled for next Friday with zero test coverage on payment checkout.\nACTION ITEM: John Doe must negotiate OAuth rate limit quota increase by Wednesday.\nDELIVERABLE: Payment Gateway Integration V2 signed off by Security Lead."
+    }
+  ]
+}

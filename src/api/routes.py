@@ -68,11 +68,12 @@ async def upload_documents(
             })
             continue
 
+        stored_path = None
         try:
             # 1. Save uploaded file
             stored_path, doc_id = ingestion_mgr.save_uploaded_file(upload_file.file, filename)
             
-            # 2. Extract & normalize text
+            # 2. Extract & normalize text (with duplicate prevention)
             parsed_doc = ingestion_mgr.process_file(stored_path, original_filename=filename)
             
             # 3. Chunk, embed, and store in vector database
@@ -94,7 +95,12 @@ async def upload_documents(
                 )
             )
         except Exception as e:
-            logger.error(f"Error processing upload for {filename}: {e}", exc_info=True)
+            if stored_path and stored_path.exists():
+                try:
+                    stored_path.unlink()
+                except Exception:
+                    pass
+            logger.error(f"Error processing upload for {filename}: {e}")
             errors.append({
                 "filename": filename,
                 "error": str(e)
@@ -181,6 +187,21 @@ async def delete_document(document_id: str):
     )
 
 
+@router.delete(
+    "/documents",
+    response_model=MessageResponse,
+    summary="Clear All Ingested Documents and Reset Vector Store"
+)
+async def clear_all_documents():
+    """Removes all documents from disk and registry, and purges all vector store entries."""
+    retriever.reset_index()
+    cleared_count = ingestion_mgr.clear_all_documents()
+    return MessageResponse(
+        success=True,
+        message=f"Successfully purged all {cleared_count} document(s), text chunks, and vector store entries."
+    )
+
+
 @router.post(
     "/rag/query",
     response_model=QueryResponse,
@@ -239,6 +260,11 @@ async def query_rag(request: QueryRequest):
     response_model=SystemHealthResponse,
     summary="System Health & Stats"
 )
+@router.get(
+    "/system/health",
+    response_model=SystemHealthResponse,
+    include_in_schema=False
+)
 async def get_health():
     stats = vector_store.get_stats()
     docs = ingestion_mgr.list_documents()
@@ -254,3 +280,32 @@ async def get_health():
         vector_store="ChromaDB (Persistent)",
         supported_file_types=list(settings.ALLOWED_EXTENSIONS)
     )
+
+
+@router.get(
+    "/system/architecture",
+    summary="System Architecture Metadata",
+    include_in_schema=False
+)
+async def get_architecture():
+    return {
+        "app_name": settings.APP_NAME,
+        "version": settings.APP_VERSION,
+        "embedding_model": settings.EMBEDDING_MODEL_NAME,
+        "vector_dim": settings.EMBEDDING_DIMENSION,
+        "vector_store": "ChromaDB (Persistent)",
+        "chunk_size": settings.CHUNK_SIZE,
+        "chunk_overlap": settings.CHUNK_OVERLAP,
+        "distance_metric": settings.DISTANCE_METRIC,
+        "supported_formats": list(settings.ALLOWED_EXTENSIONS),
+        "milestones": ["M1: Ingestion & RAG", "M2: Multi-Agent Intelligence", "M3: Health Scoring, Doc Gen & Chat", "M4: Executive Dashboard & Incremental Upload"]
+    }
+
+
+@router.post(
+    "/rag/search",
+    response_model=QueryResponse,
+    include_in_schema=False
+)
+async def search_rag_alias(request: QueryRequest):
+    return await query_rag(request)

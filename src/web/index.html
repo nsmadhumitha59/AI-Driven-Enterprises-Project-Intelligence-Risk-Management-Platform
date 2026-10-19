@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Project Intelligence &amp; Risk Advisor — Milestones 1, 2 &amp; 3</title>
+  <title>AI Project Intelligence &amp; Risk Advisor</title>
   <meta name="description" content="AI Project Intelligence & Risk Advisor: Ingestion, Multi-Agent Analytics, Documentation Generation, Health Scoring, and Conversational Q&A" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,10 +15,10 @@
     <!-- Header -->
     <header class="navbar">
       <div class="brand">
-        <div class="logo-icon">⚡</div>
+        <div class="logo-icon">🛡️</div>
         <div class="brand-text">
           <h1>AI Project Intelligence &amp; Risk Advisor</h1>
-          <span class="badge milestone-badge">Milestone 1, 2 &amp; 3: Full Project Intelligence</span>
+          <p class="brand-subtitle" style="font-size: 0.82rem; color: var(--text-muted); margin: 0; font-weight: 500;">Enterprise Project Intelligence &amp; Risk Management</p>
         </div>
       </div>
       <div class="header-actions">
@@ -54,21 +54,32 @@
       </div>
     </section>
 
-    <!-- Navigation Tabs for Switching Between Milestones -->
+    <!-- Navigation Tabs -->
     <nav class="portal-tabs">
-      <button class="tab-btn active" id="tabIngestion" data-target="sectionIngestion">
-        📂 Document Ingestion &amp; RAG Search (M1)
+      <button class="tab-btn active" id="tabMilestone4" data-target="sectionMilestone4">
+        📊 Executive Dashboard
+      </button>
+      <button class="tab-btn" id="tabIngestion" data-target="sectionIngestion">
+        📂 Document Ingestion &amp; Search
       </button>
       <button class="tab-btn" id="tabAgents" data-target="sectionAgents">
-        🤖 Milestone 2: Multi-Agent Intelligence
+        🤖 Multi-Agent Intelligence
       </button>
       <button class="tab-btn" id="tabMilestone3" data-target="sectionMilestone3">
-        🌟 Milestone 3: Health Score, Doc Studio &amp; Chat
+        🌟 Health Score, Doc Studio &amp; Chat
       </button>
     </nav>
 
+    <!-- Section 0: Milestone 4 Executive Dashboard -->
+    <main class="m4-layout tab-content active" id="sectionMilestone4">
+      <div id="m4DashboardContainer">
+        <!-- Rendered dynamically by static/app.js -->
+        <div class="empty-state">Loading Executive Dashboard &amp; Knowledge Base Intelligence...</div>
+      </div>
+    </main>
+
     <!-- Section 1: Ingestion & Search (Milestone 1) -->
-    <main class="main-layout tab-content active" id="sectionIngestion">
+    <main class="main-layout tab-content" id="sectionIngestion">
       <!-- Ingestion Column -->
       <section class="panel ingestion-panel">
         <div class="panel-header">
@@ -179,7 +190,7 @@
       <section class="panel agent-control-panel">
         <div class="agent-control-header">
           <div>
-            <h2>🤖 Milestone 2 Specialized Intelligence Agents</h2>
+            <h2>🤖 Specialized Intelligence Agents</h2>
             <span class="panel-caption">Grounds structured insights over uploaded PDF, DOCX, CSV, and TXT artifacts via RAG</span>
           </div>
           <div class="agent-action-buttons">

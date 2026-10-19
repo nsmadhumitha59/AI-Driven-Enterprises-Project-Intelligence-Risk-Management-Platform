@@ -1,0 +1,73 @@
+{
+  "metadata": {
+    "document_id": "2698a2cb-9670-44ca-a574-6758506cee00",
+    "filename": "sprint_tasks.csv",
+    "original_name": "sprint_tasks.csv",
+    "file_type": "csv",
+    "file_size_bytes": 340,
+    "file_hash": "b5102351a07274765c0e133240446687374d4d39cdf73f7538f1c2ee899ca00a",
+    "upload_timestamp": "2026-10-19T15:49:18.111938Z",
+    "page_count": null,
+    "row_count": 4,
+    "char_count": 639,
+    "word_count": 83,
+    "chunk_count": 0,
+    "status": "parsed",
+    "error_message": null,
+    "custom_metadata": {
+      "columns": [
+        "Task_ID",
+        "Title",
+        "Assignee",
+        "Status",
+        "Priority"
+      ],
+      "total_columns": 5,
+      "total_rows": 4
+    }
+  },
+  "raw_text": "CSV Dataset: sprint_tasks.csv\nTotal Records: 4, Total Columns: 5\nColumn Headers: Task_ID, Title, Assignee, Status, Priority\nRow 1: Task_ID: TASK-101; Title: Implement Document Ingestion Parser; Assignee: Alice Smith; Status: Completed; Priority: High\nRow 2: Task_ID: TASK-102; Title: Setup ChromaDB Local Vector Store; Assignee: Bob Jones; Status: In Progress; Priority: Critical\nRow 3: Task_ID: TASK-103; Title: Optimize SentenceTransformers Embeddings; Assignee: Charlie Brown; Status: Completed; Priority: Medium\nRow 4: Task_ID: TASK-104; Title: Build FastAPI Endpoints for RAG; Assignee: Diana Prince; Status: In Review; Priority: High",
+  "normalized_text": "CSV Dataset: sprint_tasks.csv\nTotal Records: 4, Total Columns: 5\nColumn Headers: Task_ID, Title, Assignee, Status, Priority\nRow 1: Task_ID: TASK-101; Title: Implement Document Ingestion Parser; Assignee: Alice Smith; Status: Completed; Priority: High\nRow 2: Task_ID: TASK-102; Title: Setup ChromaDB Local Vector Store; Assignee: Bob Jones; Status: In Progress; Priority: Critical\nRow 3: Task_ID: TASK-103; Title: Optimize SentenceTransformers Embeddings; Assignee: Charlie Brown; Status: Completed; Priority: Medium\nRow 4: Task_ID: TASK-104; Title: Build FastAPI Endpoints for RAG; Assignee: Diana Prince; Status: In Review; Priority: High",
+  "sections": [
+    {
+      "section_index": 0,
+      "section_title": "Dataset Summary & Schema",
+      "page_number": null,
+      "row_number": 0,
+      "raw_text": "CSV Dataset: sprint_tasks.csv\nTotal Records: 4, Total Columns: 5\nColumn Headers: Task_ID, Title, Assignee, Status, Priority",
+      "normalized_text": "CSV Dataset: sprint_tasks.csv\nTotal Records: 4, Total Columns: 5\nColumn Headers: Task_ID, Title, Assignee, Status, Priority"
+    },
+    {
+      "section_index": 1,
+      "section_title": "Record 1",
+      "page_number": null,
+      "row_number": 1,
+      "raw_text": "Row 1: Task_ID: TASK-101; Title: Implement Document Ingestion Parser; Assignee: Alice Smith; Status: Completed; Priority: High",
+      "normalized_text": "Row 1: Task_ID: TASK-101; Title: Implement Document Ingestion Parser; Assignee: Alice Smith; Status: Completed; Priority: High"
+    },
+    {
+      "section_index": 2,
+      "section_title": "Record 2",
+      "page_number": null,
+      "row_number": 2,
+      "raw_text": "Row 2: Task_ID: TASK-102; Title: Setup ChromaDB Local Vector Store; Assignee: Bob Jones; Status: In Progress; Priority: Critical",
+      "normalized_text": "Row 2: Task_ID: TASK-102; Title: Setup ChromaDB Local Vector Store; Assignee: Bob Jones; Status: In Progress; Priority: Critical"
+    },
+    {
+      "section_index": 3,
+      "section_title": "Record 3",
+      "page_number": null,
+      "row_number": 3,
+      "raw_text": "Row 3: Task_ID: TASK-103; Title: Optimize SentenceTransformers Embeddings; Assignee: Charlie Brown; Status: Completed; Priority: Medium",
+      "normalized_text": "Row 3: Task_ID: TASK-103; Title: Optimize SentenceTransformers Embeddings; Assignee: Charlie Brown; Status: Completed; Priority: Medium"
+    },
+    {
+      "section_index": 4,
+      "section_title": "Record 4",
+      "page_number": null,
+      "row_number": 4,
+      "raw_text": "Row 4: Task_ID: TASK-104; Title: Build FastAPI Endpoints for RAG; Assignee: Diana Prince; Status: In Review; Priority: High",
+      "normalized_text": "Row 4: Task_ID: TASK-104; Title: Build FastAPI Endpoints for RAG; Assignee: Diana Prince; Status: In Review; Priority: High"
+    }
+  ]
+}

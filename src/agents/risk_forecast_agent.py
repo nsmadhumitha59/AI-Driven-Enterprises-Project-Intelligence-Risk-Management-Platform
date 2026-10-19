@@ -145,12 +145,20 @@ class RiskForecastAgent(BaseAgent):
             retrieval_chunks = self.retrieve_context(custom_query=query_context)
 
         if not retrieval_chunks:
+            empty_msg = "No relevant information found in the uploaded documents."
             return RiskForecastResult(
                 agent_name=self.name,
                 agent_role=self.role,
                 execution_status=AgentExecutionStatus.NO_DATA,
-                notes="No project chunks found for risk analysis in knowledge base.",
-                executive_risk_statement="No risks identified due to lack of retrieved documents.",
+                notes=empty_msg,
+                executive_risk_statement=empty_msg,
+                forecast=DeliveryForecast(
+                    overall_status=DeliveryStatus.ON_TRACK,
+                    slippage_probability=0.0,
+                    confidence_level="Low",
+                    key_forecast_factors=[empty_msg],
+                    delivery_summary=empty_msg
+                ),
                 execution_time_ms=round((time.perf_counter() - start_time) * 1000, 2)
             )
 

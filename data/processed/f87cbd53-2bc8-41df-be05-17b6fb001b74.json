@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "document_id": "f87cbd53-2bc8-41df-be05-17b6fb001b74",
+    "filename": "initial_doc.txt",
+    "original_name": "initial_doc.txt",
+    "file_type": "txt",
+    "file_size_bytes": 102,
+    "file_hash": "215da168315e4eda205a45dcf5ca767ab6e5cae6b46c60c2ec31bb21de3111d6",
+    "upload_timestamp": "2026-10-19T15:49:18.775643Z",
+    "page_count": null,
+    "row_count": null,
+    "char_count": 100,
+    "word_count": 12,
+    "chunk_count": 0,
+    "status": "parsed",
+    "error_message": null,
+    "custom_metadata": {
+      "encoding": "utf-8"
+    }
+  },
+  "raw_text": "Project Architecture Baseline Notes:\nGoal: Launch scalable microservices platform.\nOwner: Core Team.",
+  "normalized_text": "Project Architecture Baseline Notes:\nGoal: Launch scalable microservices platform.\nOwner: Core Team.",
+  "sections": [
+    {
+      "section_index": 0,
+      "section_title": "Section 1",
+      "page_number": null,
+      "row_number": null,
+      "raw_text": "Project Architecture Baseline Notes:\nGoal: Launch scalable microservices platform.\nOwner: Core Team.",
+      "normalized_text": "Project Architecture Baseline Notes:\nGoal: Launch scalable microservices platform.\nOwner: Core Team."
+    }
+  ]
+}

@@ -7,17 +7,17 @@ export default function Header({ isHealthy, documentCount, architectureInfo }) {
         <div className="brand-icon">🛡️</div>
         <div className="brand-title">
           <h1>AI Project Intelligence & Risk Advisor</h1>
-          <p>Milestone 1: RAG Document Ingestion & Vector Retrieval Engine</p>
+          <p>Enterprise Project Intelligence & Risk Management</p>
         </div>
       </div>
       
       <div className="header-status">
         <div className="status-badge" style={{ borderColor: 'rgba(99, 102, 241, 0.3)' }}>
-          📚 <strong>{documentCount}</strong> Docs Indexed
+          📚 <strong>{documentCount}</strong> Documents Active
         </div>
         <div className={`status-badge ${isHealthy ? 'online' : 'offline'}`}>
           <span className="status-dot"></span>
-          {isHealthy ? 'Backend Operational' : 'Connecting...'}
+          {isHealthy ? 'System Operational' : 'Connecting...'}
         </div>
       </div>
     </header>

@@ -11,6 +11,7 @@ from configs.settings import settings
 from .routes import router as api_router
 from .agent_routes import router as agent_router
 from .m3_routes import router as m3_router
+from .m4_routes import router as m4_router
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "web" / "static"
 INDEX_HTML = Path(__file__).resolve().parent.parent / "web" / "index.html"
@@ -22,15 +23,17 @@ def create_app() -> FastAPI:
         title=settings.APP_NAME,
         version=settings.APP_VERSION,
         description=(
-            "AI Project Intelligence & Risk Advisor (Milestones 1, 2, and 3)\n\n"
+            "AI Project Intelligence & Risk Advisor (Milestones 1, 2, 3, and 4)\n\n"
             "Features:\n"
             "- Multi-format document ingestion (PDF, DOCX, CSV, TXT)\n"
+            "- Incremental document uploads & vector updates\n"
             "- Content normalization and metadata tracking\n"
             "- Dense vector embeddings via SentenceTransformers & ChromaDB vector store\n"
             "- Milestone 2 Multi-Agent Intelligence (Scope, Risk Forecasting, Blockers & Actions)\n"
             "- Milestone 3 Documentation Generation (User Stories, Risk Register, Action Items)\n"
             "- Milestone 3 Project Health Scoring (Scope Clarity, Timeline Risk, Blocker Severity)\n"
-            "- Milestone 3 Conversational Project Intelligence Assistant (RAG Chatbot)"
+            "- Milestone 3 Conversational Project Intelligence Assistant (RAG Chatbot)\n"
+            "- Milestone 4 Executive Project Insights & Risk Summary Dashboard"
         ),
         docs_url="/docs",
         redoc_url="/redoc"
@@ -49,6 +52,7 @@ def create_app() -> FastAPI:
     app.include_router(api_router)
     app.include_router(agent_router)
     app.include_router(m3_router)
+    app.include_router(m4_router)
 
     # Mount Static Files for UI if they exist
     if STATIC_DIR.exists():

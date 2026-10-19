@@ -143,3 +143,8 @@ class SemanticRetriever:
     def delete_document_index(self, document_id: str) -> None:
         """Removes all indexed vectors for the given document."""
         self.vector_store.delete_document(document_id)
+
+    def reset_index(self) -> None:
+        """Purges all indexed vectors and resets the ChromaDB collection."""
+        self.vector_store.reset()
+

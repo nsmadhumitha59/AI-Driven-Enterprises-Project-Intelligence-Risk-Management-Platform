@@ -335,7 +335,7 @@ class DocumentationGenerationAgent(BaseAgent):
         # Section 1: User Stories
         md.append("## 1. 📖 Agile User Stories\n")
         if not user_stories:
-            md.append("> *No explicit user stories derived from currently indexed documents.*\n")
+            md.append("> *No relevant information found in the uploaded documents.*\n")
         else:
             for s in user_stories:
                 md.append(f"### Story `{s.story_id}`: {s.title}")
@@ -351,7 +351,7 @@ class DocumentationGenerationAgent(BaseAgent):
         # Section 2: Risk Register
         md.append("## 2. 🛡️ Enterprise Risk Register\n")
         if not risk_register:
-            md.append("> *No active project risks identified in current knowledge base.*\n")
+            md.append("> *No relevant information found in the uploaded documents.*\n")
         else:
             md.append("| Risk ID | Title | Category | Severity | Likelihood | Impact | Owner | Mitigation Strategy | Source |")
             md.append("| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |")
@@ -362,7 +362,7 @@ class DocumentationGenerationAgent(BaseAgent):
         # Section 3: Action Items
         md.append("## 3. ✅ Action Items & Execution Checklist\n")
         if not action_items:
-            md.append("> *No active action items extracted from current knowledge base.*\n")
+            md.append("> *No relevant information found in the uploaded documents.*\n")
         else:
             md.append("| Item ID | Task Description | Assignee | Due Date | Priority | Status | Source |")
             md.append("| :--- | :--- | :--- | :--- | :--- | :--- | :--- |")
@@ -389,7 +389,9 @@ class DocumentationGenerationAgent(BaseAgent):
                 agent_name=self.name,
                 agent_role=self.role,
                 execution_status=AgentExecutionStatus.NO_DATA,
-                notes="No relevant document chunks found in vector database.",
+                notes="No relevant information found in the uploaded documents.",
+                executive_summary="No relevant information found in the uploaded documents.",
+                markdown_export="> No relevant information found in the uploaded documents.",
                 execution_time_ms=round((time.perf_counter() - start_time) * 1000, 2)
             )
 

@@ -254,6 +254,87 @@ def cmd_stats(args):
             print(f"  • {d.original_name} [{d.file_type.upper()}] - {d.chunk_count} chunks (ID: {d.document_id[:8]}...)")
 
 
+def cmd_clear(args):
+    """Purges all ingested documents, text chunks, and vector store entries."""
+    manager = IngestionManager()
+    store = ChromaVectorStore()
+    store.reset()
+    cleared = manager.clear_all_documents()
+    print(f"\n🗑️ Successfully purged all {cleared} documents and reset ChromaDB vector store.")
+    print("Knowledge base is now clean and ready for new document uploads.\n")
+
+
+def cmd_dashboard(args):
+    """Executes Milestone 4 Executive Project Insights & Risk Summary Dashboard from CLI."""
+    from src.api.m4_routes import _build_dashboard_payload
+    
+    print("\n=======================================================")
+    print(f"📊 MILESTONE 4: EXECUTIVE PROJECT INTELLIGENCE & RISK DASHBOARD")
+    print(f"=======================================================")
+    
+    focus_query = args.focus
+    doc_id = args.document_id
+    res = _build_dashboard_payload(query_context=focus_query, document_id=doc_id)
+    
+    print(f"\n🏢 Project: {res.project_title}")
+    print(f"⏱️ Generated in: {res.execution_time_ms}ms")
+    print(f"\n📋 Executive Summary:\n{res.executive_summary}\n")
+    
+    print("-------------------------------------------------------")
+    print(f"🚦 Overall Health Score: {res.health.overall_health_score}/100 [{res.health.health_status.upper()}]")
+    print(f"  • Scope Clarity:   {res.health.scope_clarity_score}/100")
+    print(f"  • Timeline Risk:   {res.health.timeline_risk_score}/100")
+    print(f"  • Blocker Severity:{res.health.blocker_score}/100")
+    
+    if res.risks.forecast:
+        fc = res.risks.forecast
+        print(f"\n⏱️ Delivery Forecast: {fc.overall_status.value} (Slippage Risk: {round(fc.slippage_probability * 100, 1)}%)")
+        factors = getattr(fc, "key_forecast_factors", None) or getattr(fc, "forecast_factors", [])
+        if factors:
+            print("  Factors:")
+            for f in factors[:3]:
+                print(f"    - {f}")
+                
+    goals = res.scope.project_goals or res.scope.goals
+    if goals:
+        print(f"\n🎯 Scope Goals ({len(goals)}):")
+        for g in goals[:4]:
+            print(f"  • [{g.category.upper()}] {g.statement}")
+            
+    deliverables = res.scope.deliverables
+    if deliverables:
+        print(f"\n📦 Deliverables ({len(deliverables)}):")
+        for d in deliverables[:4]:
+            print(f"  • {d.name} (Owner: {d.owner}, Status: {d.status})")
+            
+    blockers = res.blockers_actions.active_blockers or res.blockers_actions.blockers
+    if blockers:
+        print(f"\n🛑 Active Blockers ({len(blockers)}):")
+        for b in blockers:
+            print(f"  • [{b.severity.value if hasattr(b.severity, 'value') else b.severity}] {b.description}")
+            
+    risks = res.risks.detected_risks
+    if risks:
+        print(f"\n⚠️ Extracted Risks ({len(risks)}):")
+        for r in risks[:4]:
+            print(f"  • [{r.level.value if hasattr(r.level, 'value') else r.level}] {r.title} — Mitigation: {r.suggested_mitigation}")
+            
+    actions = res.blockers_actions.action_items
+    if actions:
+        print(f"\n✅ Action Items ({len(actions)}):")
+        for a in actions[:4]:
+            due = f" (Due: {a.due_date})" if a.due_date else ""
+            print(f"  • {a.task_description} [Assignee: {a.assignee}{due}]")
+            
+    if res.key_recommendations:
+        print(f"\n💡 Strategic Recommendations ({len(res.key_recommendations)}):")
+        for rec in res.key_recommendations[:3]:
+            print(f"  • [{rec.priority.upper()}] {rec.action} (Target: {rec.target_owner})")
+            
+    kb = res.knowledge_base
+    print(f"\n📚 Knowledge Base Status: {kb.total_documents} documents, {kb.total_chunks} indexed chunks in ChromaDB.\n")
+
+
 def main():
     parser = argparse.ArgumentParser(description="AI Project Intelligence & Risk Advisor CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -291,6 +372,14 @@ def main():
     chat_parser = subparsers.add_parser("chat", help="Ask a question to Conversational Project Intelligence Assistant")
     chat_parser.add_argument("question", help="Question text (e.g., 'Are we on track?', 'What are our biggest risks?')")
 
+    # Dashboard command (Milestone 4)
+    dashboard_parser = subparsers.add_parser("dashboard", help="Generate Milestone 4 Executive Insights & Risk Summary Dashboard")
+    dashboard_parser.add_argument("--focus", default=None, help="Optional focus query or sprint topic")
+    dashboard_parser.add_argument("--document-id", default=None, help="Optional document ID to focus analysis on")
+
+    # Clear command
+    subparsers.add_parser("clear", help="Purge all ingested documents, text chunks, and vector store entries")
+
     # Stats command
     subparsers.add_parser("stats", help="Show system knowledge base stats")
 
@@ -310,6 +399,10 @@ def main():
         cmd_health(args)
     elif args.command == "chat":
         cmd_chat(args)
+    elif args.command == "dashboard":
+        cmd_dashboard(args)
+    elif args.command == "clear":
+        cmd_clear(args)
     elif args.command == "stats":
         cmd_stats(args)
     else:

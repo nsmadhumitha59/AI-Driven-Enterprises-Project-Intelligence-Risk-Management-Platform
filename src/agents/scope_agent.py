@@ -167,8 +167,8 @@ class ScopeExtractionAgent(BaseAgent):
                 agent_name=self.name,
                 agent_role=self.role,
                 execution_status=AgentExecutionStatus.NO_DATA,
-                empty_goals_message="No explicit project goals found in the uploaded documents.",
-                notes="No relevant document chunks found in vector database.",
+                empty_goals_message="No relevant information found in the uploaded documents.",
+                notes="No relevant information found in the uploaded documents.",
                 execution_time_ms=round((time.perf_counter() - start_time) * 1000, 2)
             )
 
@@ -538,7 +538,7 @@ class ScopeExtractionAgent(BaseAgent):
 
         empty_goals_msg = None
         if not extracted_goals:
-            empty_goals_msg = "No explicit project goals found in the uploaded documents."
+            empty_goals_msg = "No relevant information found in the uploaded documents."
 
         summary_text = (
             f"Extracted {len(extracted_goals)} project goals, {len(deliverables_list)} deliverables, "

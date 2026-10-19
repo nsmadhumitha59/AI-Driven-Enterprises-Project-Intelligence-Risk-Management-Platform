@@ -4,20 +4,26 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   // Navigation Tabs
+  const tabMilestone4 = document.getElementById("tabMilestone4");
   const tabIngestion = document.getElementById("tabIngestion");
   const tabAgents = document.getElementById("tabAgents");
   const tabMilestone3 = document.getElementById("tabMilestone3");
+  const sectionMilestone4 = document.getElementById("sectionMilestone4");
   const sectionIngestion = document.getElementById("sectionIngestion");
   const sectionAgents = document.getElementById("sectionAgents");
   const sectionMilestone3 = document.getElementById("sectionMilestone3");
 
   function switchTab(activeTab, activeSection) {
-    [tabIngestion, tabAgents, tabMilestone3].forEach(t => t && t.classList.remove("active"));
-    [sectionIngestion, sectionAgents, sectionMilestone3].forEach(s => s && s.classList.remove("active"));
-    activeTab.classList.add("active");
-    activeSection.classList.add("active");
+    [tabMilestone4, tabIngestion, tabAgents, tabMilestone3].forEach(t => t && t.classList.remove("active"));
+    [sectionMilestone4, sectionIngestion, sectionAgents, sectionMilestone3].forEach(s => s && s.classList.remove("active"));
+    if (activeTab) activeTab.classList.add("active");
+    if (activeSection) activeSection.classList.add("active");
+    if (activeTab === tabMilestone4) {
+      loadM4Dashboard();
+    }
   }
 
+  if (tabMilestone4) tabMilestone4.addEventListener("click", () => switchTab(tabMilestone4, sectionMilestone4));
   if (tabIngestion) tabIngestion.addEventListener("click", () => switchTab(tabIngestion, sectionIngestion));
   if (tabAgents) tabAgents.addEventListener("click", () => switchTab(tabAgents, sectionAgents));
   if (tabMilestone3) tabMilestone3.addEventListener("click", () => switchTab(tabMilestone3, sectionMilestone3));
@@ -682,7 +688,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderFullAnalysisReport(data) {
-    agentReportTitle.textContent = `🌟 Full Milestone 2 Multi-Agent Intelligence Report`;
+    agentReportTitle.textContent = `🌟 Full Multi-Agent Intelligence Report`;
     agentExecTime.textContent = `${data.total_execution_time_ms}ms (Multi-Agent Pipeline)`;
 
     // Render individual components to string
@@ -707,7 +713,7 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
 
     agentOutputContainer.innerHTML = execHtml + scopeHtml + riskHtml + blockerHtml;
-    agentReportTitle.textContent = `🌟 Full Milestone 2 Multi-Agent Intelligence Report`;
+    agentReportTitle.textContent = `🌟 Full Multi-Agent Intelligence Report`;
     agentExecTime.textContent = `${data.total_execution_time_ms}ms (Multi-Agent Pipeline)`;
   }
 
@@ -1192,6 +1198,571 @@ document.addEventListener("DOMContentLoaded", () => {
     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
   }
 
+  // =====================================================================
+  // Milestone 4: Executive Insights & Risk Dashboard Implementation
+  // =====================================================================
+
+  let currentDashboardData = null;
+  let currentRiskFilter = "ALL";
+
+  async function loadM4Dashboard(focusQuery = "") {
+    const container = document.getElementById("m4DashboardContainer");
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="card-panel" style="text-align: center; padding: 50px 20px;">
+        <div style="font-size: 2.5rem; animation: spin 2s linear infinite;">⚙️</div>
+        <h3 style="margin-top: 14px; color: #fff;">Synthesizing Executive Intelligence &amp; Risk Dashboard...</h3>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 6px;">
+          Running multi-agent RAG reasoning over all indexed project documents
+        </p>
+      </div>
+    `;
+
+    try {
+      const url = focusQuery ? `/api/v1/m4/dashboard?query_context=${encodeURIComponent(focusQuery)}` : `/api/v1/m4/dashboard`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error(`Dashboard API responded with status ${res.status}`);
+      }
+      const data = await res.json();
+      currentDashboardData = data;
+      renderM4Dashboard(data, focusQuery);
+    } catch (err) {
+      console.error("Failed to load Milestone 4 Dashboard:", err);
+      container.innerHTML = `
+        <div class="card-panel banner-error" style="padding: 24px;">
+          <h3>⚠️ Unable to Load Dashboard</h3>
+          <p style="margin-top: 6px;">${escapeHtml(err.message)}</p>
+          <button class="btn btn-primary" style="margin-top: 14px;" onclick="loadM4Dashboard()">🔄 Retry</button>
+        </div>
+      `;
+    }
+  }
+
+  function renderM4Dashboard(data, focusQuery = "") {
+    const container = document.getElementById("m4DashboardContainer");
+    if (!container) return;
+
+    const health = data.health || {};
+    const scope = data.scope || {};
+    const risks = data.risks || {};
+    const blockersActions = data.blockers_actions || {};
+    const kb = data.knowledge_base || {};
+    const forecast = risks.forecast || {};
+    const recommendations = data.key_recommendations || health.recommendations || [];
+
+    const goals = scope.project_goals || scope.goals || [];
+    const deliverables = scope.deliverables || [];
+    const boundaries = scope.scope_boundaries || {};
+    const detectedRisks = risks.detected_risks || [];
+    const activeBlockers = blockersActions.active_blockers || blockersActions.blockers || [];
+    const actionItems = blockersActions.action_items || [];
+
+    const filteredRisks = currentRiskFilter === "ALL"
+      ? detectedRisks
+      : detectedRisks.filter(r => (r.level || "").toUpperCase() === currentRiskFilter);
+
+    const healthScore = Math.round(health.overall_health_score || 0);
+    const healthBadge = healthScore >= 80 ? "health-badge-good" : (healthScore >= 60 ? "health-badge-warning" : "health-badge-critical");
+    const statusPillClass = (health.health_status || "").toLowerCase().includes("healthy") ? "status-healthy" : ((health.health_status || "").toLowerCase().includes("at risk") ? "status-warning" : "status-critical");
+
+    container.innerHTML = `
+      <div class="dashboard-root">
+        <!-- 1. Toolbar & Controls -->
+        <div class="card-panel dashboard-toolbar">
+          <div class="toolbar-header">
+            <div>
+              <div style="display:flex; align-items:center; gap: 10px;">
+                <h2 style="font-size: 1.35rem; font-weight: 700; color: #fff;">Executive Project Intelligence &amp; Risk Dashboard</h2>
+              </div>
+              <p style="color: var(--text-muted); font-size: 0.84rem; margin-top: 4px;">
+                Workspace: <strong style="color: #c7d2fe;">${escapeHtml(data.project_title || 'Project')}</strong> • Live Multi-Agent Synthesis
+              </p>
+            </div>
+            <button class="btn btn-primary" id="btnM4Rerun">⚡ Rerun Analysis</button>
+          </div>
+
+          <!-- Focus Query Input Form -->
+          <form class="dashboard-filter-form" id="m4FilterForm">
+            <div style="display: flex; gap: 8px;">
+              <input 
+                type="text" 
+                id="m4FocusInput" 
+                class="search-input" 
+                placeholder="Filter analysis by sprint or feature focus (e.g. 'Sprint 4', 'Payment Gateway', 'Security')..."
+                value="${escapeHtml(focusQuery)}"
+              />
+              <button type="submit" class="btn btn-primary">Focus</button>
+              ${focusQuery ? `<button type="button" class="btn btn-secondary" id="btnM4ClearFocus">Clear</button>` : ''}
+            </div>
+          </form>
+
+          <!-- Live KB Stats Strip -->
+          <div class="kb-stats-strip">
+            <div class="kb-stat-item">
+              <span class="kb-stat-icon">📚</span>
+              <div>
+                <div class="kb-stat-num">${kb.total_documents || 0} Documents</div>
+                <div class="kb-stat-lbl">PDF, DOCX, CSV, TXT</div>
+              </div>
+            </div>
+            <div class="kb-stat-item">
+              <span class="kb-stat-icon">🧩</span>
+              <div>
+                <div class="kb-stat-num">${kb.total_chunks || 0} Indexed Chunks</div>
+                <div class="kb-stat-lbl">ChromaDB Vector Store</div>
+              </div>
+            </div>
+            <div class="kb-stat-item">
+              <span class="kb-stat-icon">⏱️</span>
+              <div>
+                <div class="kb-stat-num">${data.execution_time_ms || 0} ms</div>
+                <div class="kb-stat-lbl">Synthesis Latency</div>
+              </div>
+            </div>
+            <div class="kb-stat-item">
+              <span class="kb-stat-icon">🛡️</span>
+              <div>
+                <div class="kb-stat-num">${detectedRisks.length} Risks / ${activeBlockers.length} Blockers</div>
+                <div class="kb-stat-lbl">Detected Challenges</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Incremental Ingestion Box -->
+          <div class="incremental-upload-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap: 10px;">
+              <div>
+                <h4 style="font-size: 0.92rem; font-weight: 600; color: #e0e7ff;">➕ Incremental Document Ingestion</h4>
+                <p style="font-size: 0.78rem; color: var(--text-muted);">
+                  Upload new PDF, DOCX, CSV, or TXT files to augment the knowledge base without deleting existing documents.
+                </p>
+              </div>
+              <div style="display:flex; gap: 8px; align-items:center;">
+                <input type="file" id="m4IncFileInput" multiple accept=".pdf,.docx,.doc,.csv,.txt,.md" style="display:none;" />
+                <button type="button" class="btn btn-secondary" id="btnM4ChooseFiles">📂 Choose Files (<span id="m4IncCount">0</span>)</button>
+                <button type="button" class="btn btn-primary" id="btnM4UploadInc" style="display:none;">🚀 Ingest &amp; Rerun</button>
+              </div>
+            </div>
+            <div id="m4SelectedFilesList" class="selected-inc-files"></div>
+            <div id="m4IncMessageBanner"></div>
+          </div>
+        </div>
+
+        <!-- 2. KPI Cards Grid -->
+        <div class="kpi-grid">
+          <!-- Overall Health Score Card -->
+          <div class="card-panel kpi-card">
+            <div class="kpi-label">Project Health Score</div>
+            <div class="kpi-health-wrapper">
+              <div class="health-score-circle ${healthBadge}">
+                <span class="health-score-val">${healthScore}</span>
+                <span class="health-score-max">/100</span>
+              </div>
+              <div class="health-status-meta">
+                <span class="status-pill ${statusPillClass}">${escapeHtml(health.health_status || 'Evaluating')}</span>
+                <p style="font-size: 0.76rem; color: var(--text-muted); margin-top: 4px;">Multi-agent health synthesis</p>
+              </div>
+            </div>
+
+            <div class="dimension-bar-list">
+              <div class="dim-row">
+                <span class="dim-name">Scope Clarity</span>
+                <div class="dim-bar-track">
+                  <div class="dim-bar-fill fill-cyan" style="width: ${Math.min(100, health.scope_clarity_score || 0)}%;"></div>
+                </div>
+                <span class="dim-val">${Math.round(health.scope_clarity_score || 0)}%</span>
+              </div>
+              <div class="dim-row">
+                <span class="dim-name">Timeline Risk</span>
+                <div class="dim-bar-track">
+                  <div class="dim-bar-fill fill-amber" style="width: ${Math.min(100, health.timeline_risk_score || 0)}%;"></div>
+                </div>
+                <span class="dim-val">${Math.round(health.timeline_risk_score || 0)}%</span>
+              </div>
+              <div class="dim-row">
+                <span class="dim-name">Blocker Score</span>
+                <div class="dim-bar-track">
+                  <div class="dim-bar-fill fill-rose" style="width: ${Math.min(100, health.blocker_score || 0)}%;"></div>
+                </div>
+                <span class="dim-val">${Math.round(health.blocker_score || 0)}%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Timeline & Delivery Forecast Card -->
+          <div class="card-panel kpi-card">
+            <div class="kpi-label">Delivery Timeline Risk</div>
+            <div style="display:flex; align-items:baseline; gap: 10px; margin-top: 8px;">
+              <span class="status-pill ${statusPillClass}">⏱️ ${escapeHtml(forecast.overall_status || 'On Track')}</span>
+              <span style="font-size: 0.82rem; color: var(--text-muted);">
+                Slippage Risk: <strong style="color: #f59e0b;">${Math.round((forecast.slippage_probability || 0) * 100)}%</strong>
+              </span>
+            </div>
+
+            <div style="margin-top: 14px;">
+              <div style="font-size: 0.74rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 6px;">
+                Forecast Factors:
+              </div>
+              ${(forecast.key_forecast_factors || forecast.forecast_factors) && (forecast.key_forecast_factors || forecast.forecast_factors).length > 0 ? `
+                <ul style="list-style: none; padding-left: 0;">
+                  ${(forecast.key_forecast_factors || forecast.forecast_factors).slice(0, 3).map(f => `
+                    <li style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; padding-left: 12px; position: relative;">
+                      <span style="position: absolute; left: 0; color: var(--accent-amber); font-weight: bold;">•</span>
+                      ${escapeHtml(f)}
+                    </li>
+                  `).join('')}
+                </ul>
+              ` : `
+                <p style="font-size: 0.82rem; color: var(--text-muted);">Milestone schedules aligned with projected delivery dates.</p>
+              `}
+            </div>
+          </div>
+
+          <!-- Executive Summary Card -->
+          <div class="card-panel kpi-card">
+            <div class="kpi-label">Executive Synthesis</div>
+            <p style="margin-top: 8px; line-height: 1.55; font-size: 0.88rem; color: #e2e8f0;">
+              ${escapeHtml(data.executive_summary || 'Analysis complete.')}
+            </p>
+          </div>
+        </div>
+
+        <!-- 3. Main Dashboard Columns Grid -->
+        <div class="dashboard-columns-grid">
+          <!-- Left Column: Scope & Action Items & Recommendations -->
+          <div class="dashboard-col">
+            <!-- Scope Summary -->
+            <div class="card-panel widget-panel">
+              <div class="widget-header">
+                <h3>🎯 Scope &amp; Deliverables Summary</h3>
+                <span class="badge-count">${deliverables.length} Deliverables</span>
+              </div>
+
+              <!-- Goals -->
+              <div class="widget-subsection">
+                <div class="widget-subtitle">Project Goals</div>
+                ${goals.length > 0 ? `
+                  <div class="goal-list">
+                    ${goals.map(g => `
+                      <div class="goal-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                          <span class="goal-category-tag">${escapeHtml(g.category || 'Goal')}</span>
+                          <span style="font-size: 0.72rem; color: var(--text-muted);">${escapeHtml(g.goal_id || '')}</span>
+                        </div>
+                        <p class="goal-text">${escapeHtml(g.statement)}</p>
+                      </div>
+                    `).join('')}
+                  </div>
+                ` : `
+                  <p style="font-size: 0.84rem; color: var(--text-muted);">${escapeHtml(scope.empty_goals_message || 'No explicit goals found.')}</p>
+                `}
+              </div>
+
+              <!-- Deliverables Table -->
+              <div class="widget-subsection">
+                <div class="widget-subtitle">Key Deliverables</div>
+                ${deliverables.length > 0 ? `
+                  <div style="overflow-x: auto;">
+                    <table class="dashboard-table">
+                      <thead>
+                        <tr>
+                          <th>Deliverable</th>
+                          <th>Owner</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${deliverables.map(d => `
+                          <tr>
+                            <td style="font-weight: 500;">${escapeHtml(d.name)}</td>
+                            <td style="color: var(--text-muted);">${escapeHtml(d.owner || 'Unassigned')}</td>
+                            <td><span class="status-pill status-healthy">${escapeHtml(d.status || 'Planned')}</span></td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                ` : `
+                  <p style="font-size: 0.84rem; color: var(--text-muted);">No deliverables extracted.</p>
+                `}
+              </div>
+
+              <!-- Scope Boundaries -->
+              ${(boundaries.in_scope?.length > 0 || boundaries.out_of_scope?.length > 0) ? `
+                <div class="widget-subsection">
+                  <div class="widget-subtitle">Scope Boundaries</div>
+                  <div class="boundaries-grid">
+                    ${boundaries.in_scope?.length > 0 ? `
+                      <div class="boundary-col in-scope">
+                        <span class="boundary-title">✅ In Scope</span>
+                        <ul>
+                          ${boundaries.in_scope.map(s => `<li>${escapeHtml(s)}</li>`).join('')}
+                        </ul>
+                      </div>
+                    ` : ''}
+                    ${boundaries.out_of_scope?.length > 0 ? `
+                      <div class="boundary-col out-scope">
+                        <span class="boundary-title">🚫 Out of Scope</span>
+                        <ul>
+                          ${boundaries.out_of_scope.map(s => `<li>${escapeHtml(s)}</li>`).join('')}
+                        </ul>
+                      </div>
+                    ` : ''}
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Action Items Checklist -->
+            <div class="card-panel widget-panel">
+              <div class="widget-header">
+                <h3>✅ Action Items Checklist</h3>
+                <span class="badge-count">${actionItems.length} Tasks</span>
+              </div>
+              ${actionItems.length > 0 ? `
+                <div class="action-items-list">
+                  ${actionItems.map(a => `
+                    <div class="action-item-row">
+                      <div class="action-checkbox">✓</div>
+                      <div style="flex:1;">
+                        <div class="action-desc">${escapeHtml(a.task_description)}</div>
+                        <div class="action-meta">
+                          <span>👤 <strong>${escapeHtml(a.assignee || 'Unassigned')}</strong></span>
+                          ${a.due_date ? `<span>📅 Due: ${escapeHtml(a.due_date)}</span>` : ''}
+                          ${a.priority ? `<span class="priority-tag tag-${(a.priority || '').toLowerCase()}">${escapeHtml(a.priority)}</span>` : ''}
+                        </div>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              ` : `
+                <p style="font-size: 0.84rem; color: var(--text-muted);">${escapeHtml(blockersActions.empty_actions_message || 'No pending action items.')}</p>
+              `}
+            </div>
+
+            <!-- Recommendations -->
+            ${recommendations.length > 0 ? `
+              <div class="card-panel widget-panel">
+                <div class="widget-header">
+                  <h3>💡 Strategic Recommendations</h3>
+                  <span class="badge-count">${recommendations.length} Actions</span>
+                </div>
+                <div class="rec-list">
+                  ${recommendations.map(r => `
+                    <div class="rec-card">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="priority-tag tag-${(r.priority || 'medium').toLowerCase()}">${escapeHtml(r.priority || 'Medium')} Priority</span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Target: ${escapeHtml(r.target_owner || 'Team')}</span>
+                      </div>
+                      <p class="rec-action-text">${escapeHtml(r.action)}</p>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Right Column: Active Blockers & Extracted Risks -->
+          <div class="dashboard-col">
+            <!-- Active Blockers Panel -->
+            <div class="card-panel widget-panel">
+              <div class="widget-header">
+                <h3 style="color: #fda4af;">🛑 Active Blockers</h3>
+                <span class="badge-count" style="background: rgba(244, 63, 94, 0.2); color: #f87171;">${activeBlockers.length} Active</span>
+              </div>
+              ${activeBlockers.length > 0 ? `
+                <div class="blocker-list">
+                  ${activeBlockers.map(b => `
+                    <div class="blocker-card">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="risk-tag risk-tag-critical">${escapeHtml(b.severity?.value || b.severity || 'HIGH')} SEVERITY</span>
+                        ${b.category ? `<span style="font-size: 0.74rem; color: var(--text-muted);">${escapeHtml(b.category)}</span>` : ''}
+                      </div>
+                      <div class="blocker-desc">${escapeHtml(b.description)}</div>
+                      ${b.impact ? `<div class="blocker-impact"><strong>Impact:</strong> ${escapeHtml(b.impact)}</div>` : ''}
+                      ${b.source_document ? `<div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 6px;">📄 Source: ${escapeHtml(b.source_document)}</div>` : ''}
+                    </div>
+                  `).join('')}
+                </div>
+              ` : `
+                <div class="empty-substate">✅ No active blockers identified in knowledge base.</div>
+              `}
+            </div>
+
+            <!-- Extracted Risks Register -->
+            <div class="card-panel widget-panel">
+              <div class="widget-header">
+                <div style="display:flex; align-items:center; gap: 8px;">
+                  <h3>⚠️ Extracted Risks Register</h3>
+                  <span class="badge-count">${detectedRisks.length} Detected</span>
+                </div>
+                <div class="risk-filter-chips">
+                  ${['ALL', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(lvl => `
+                    <button class="filter-chip ${currentRiskFilter === lvl ? 'active' : ''}" data-level="${lvl}">
+                      ${lvl}
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
+
+              ${filteredRisks.length > 0 ? `
+                <div class="risks-list">
+                  ${filteredRisks.map(r => {
+                    const lvl = (r.level?.value || r.level || 'MEDIUM').toUpperCase();
+                    const tagClass = lvl === 'CRITICAL' ? 'risk-tag-critical' : (lvl === 'HIGH' ? 'risk-tag-high' : (lvl === 'LOW' ? 'risk-tag-low' : 'risk-tag-medium'));
+                    return `
+                      <div class="risk-item-card">
+                        <div class="risk-item-top">
+                          <span class="risk-tag ${tagClass}">${escapeHtml(lvl)}</span>
+                          <span class="risk-cat-label">${escapeHtml(r.category?.value || r.category || 'Risk')}</span>
+                        </div>
+                        <h4 class="risk-title">${escapeHtml(r.title)}</h4>
+                        <p class="risk-reason">${escapeHtml(r.reason)}</p>
+                        ${r.suggested_mitigation ? `
+                          <div class="risk-mitigation-box">
+                            🛡️ <strong>Mitigation:</strong> ${escapeHtml(r.suggested_mitigation)}
+                          </div>
+                        ` : ''}
+                        ${r.source_document ? `
+                          <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 6px;">📄 Source: ${escapeHtml(r.source_document)}</div>
+                        ` : ''}
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              ` : `
+                <div class="empty-substate">No ${currentRiskFilter === 'ALL' ? '' : currentRiskFilter} risks detected in current project artifacts.</div>
+              `}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Wire up events in newly rendered DOM
+    wireM4Events(focusQuery);
+  }
+
+  function wireM4Events(focusQuery) {
+    const btnRerun = document.getElementById("btnM4Rerun");
+    if (btnRerun) {
+      btnRerun.addEventListener("click", () => loadM4Dashboard(focusQuery));
+    }
+
+    const formFilter = document.getElementById("m4FilterForm");
+    if (formFilter) {
+      formFilter.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const input = document.getElementById("m4FocusInput");
+        const val = input ? input.value.trim() : "";
+        loadM4Dashboard(val);
+      });
+    }
+
+    const btnClearFocus = document.getElementById("btnM4ClearFocus");
+    if (btnClearFocus) {
+      btnClearFocus.addEventListener("click", () => loadM4Dashboard(""));
+    }
+
+    // Risk filter buttons
+    const chips = document.querySelectorAll(".filter-chip[data-level]");
+    chips.forEach(chip => {
+      chip.addEventListener("click", () => {
+        currentRiskFilter = chip.getAttribute("data-level");
+        if (currentDashboardData) {
+          renderM4Dashboard(currentDashboardData, focusQuery);
+        }
+      });
+    });
+
+    // Incremental upload file input
+    const incInput = document.getElementById("m4IncFileInput");
+    const btnChoose = document.getElementById("btnM4ChooseFiles");
+    const btnUpload = document.getElementById("btnM4UploadInc");
+    const incCount = document.getElementById("m4IncCount");
+    const selectedList = document.getElementById("m4SelectedFilesList");
+
+    if (btnChoose && incInput) {
+      btnChoose.addEventListener("click", () => incInput.click());
+    }
+
+    if (incInput) {
+      incInput.addEventListener("change", () => {
+        const files = Array.from(incInput.files || []);
+        if (incCount) incCount.textContent = files.length;
+        if (btnUpload) btnUpload.style.display = files.length > 0 ? "inline-block" : "none";
+        if (selectedList) {
+          selectedList.innerHTML = files.map(f => `
+            <span class="inc-file-pill">📄 ${escapeHtml(f.name)} (${(f.size / 1024).toFixed(1)} KB)</span>
+          `).join('');
+        }
+      });
+    }
+
+    if (btnUpload && incInput) {
+      btnUpload.addEventListener("click", async () => {
+        const files = incInput.files;
+        if (!files || files.length === 0) return;
+
+        btnUpload.disabled = true;
+        btnUpload.textContent = "⏳ Ingesting...";
+        const banner = document.getElementById("m4IncMessageBanner");
+
+        try {
+          const formData = new FormData();
+          for (let i = 0; i < files.length; i++) {
+            formData.append("files", files[i]);
+          }
+
+          const res = await fetch("/api/v1/m4/incremental-upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail?.message || err.detail || "Incremental upload failed");
+          }
+
+          const resData = await res.json();
+          if (banner) {
+            banner.innerHTML = `
+              <div class="inc-message-banner banner-success">
+                ${escapeHtml(resData.message)}
+              </div>
+            `;
+          }
+
+          // Clear files
+          incInput.value = "";
+          if (incCount) incCount.textContent = "0";
+          if (selectedList) selectedList.innerHTML = "";
+          btnUpload.style.display = "none";
+
+          // Refresh documents and rerun dashboard
+          fetchDocuments();
+          await loadM4Dashboard(focusQuery);
+        } catch (err) {
+          if (banner) {
+            banner.innerHTML = `
+              <div class="inc-message-banner banner-error">
+                ❌ Ingestion failed: ${escapeHtml(err.message)}
+              </div>
+            `;
+          }
+        } finally {
+          btnUpload.disabled = false;
+          btnUpload.textContent = "🚀 Ingest & Rerun";
+        }
+      });
+    }
+  }
+
+  // Auto load Milestone 4 Dashboard on startup
+  loadM4Dashboard();
+
   function escapeHtml(str) {
     if (!str) return "";
     return String(str)
@@ -1202,3 +1773,4 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace(/'/g, "&#039;");
   }
 });
+

@@ -158,13 +158,14 @@ class BlockerActionAgent(BaseAgent):
             retrieval_chunks = self.retrieve_context(custom_query=query_context)
 
         if not retrieval_chunks:
+            empty_msg = "No relevant information found in the uploaded documents."
             return BlockerActionResult(
                 agent_name=self.name,
                 agent_role=self.role,
                 execution_status=AgentExecutionStatus.NO_DATA,
-                empty_blockers_message="No active blockers identified from the uploaded documents.",
-                notes="No meeting or action item chunks found in vector database.",
-                executive_summary="No active blockers identified from the uploaded documents. 0 action items identified.",
+                empty_blockers_message=empty_msg,
+                notes=empty_msg,
+                executive_summary=empty_msg,
                 execution_time_ms=round((time.perf_counter() - start_time) * 1000, 2)
             )
 

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { deleteDocument } from '../services/api';
+import { deleteDocument, clearAllDocuments } from '../services/api';
 
 export default function DocumentList({ documents, onDocumentDeleted }) {
   const [filterText, setFilterText] = useState('');
   const [deletingId, setDeletingId] = useState(null);
+  const [isClearingAll, setIsClearingAll] = useState(false);
 
   const handleDelete = async (docId, filename) => {
     if (!window.confirm(`Are you sure you want to delete "${filename}" and purge all its vector chunks?`)) return;
@@ -19,15 +20,38 @@ export default function DocumentList({ documents, onDocumentDeleted }) {
     }
   };
 
-  const filteredDocs = documents.filter((doc) =>
-    doc.filename.toLowerCase().includes(filterText.toLowerCase()) ||
-    doc.file_type.toLowerCase().includes(filterText.toLowerCase()) ||
-    doc.doc_id.toLowerCase().includes(filterText.toLowerCase())
-  );
+  const handleClearAll = async () => {
+    if (!window.confirm("⚠️ Are you sure you want to remove ALL documents and purge the ChromaDB vector store?\n\nThis will remove all cached analysis and ensure only newly uploaded documents are processed.")) {
+      return;
+    }
+
+    setIsClearingAll(true);
+    try {
+      const res = await clearAllDocuments();
+      alert(res.message || "All documents and vector embeddings have been cleared successfully.");
+      if (onDocumentDeleted) onDocumentDeleted();
+    } catch (err) {
+      alert(`Error clearing documents: ${err.message}`);
+    } finally {
+      setIsClearingAll(false);
+    }
+  };
+
+  const getDocName = (doc) => doc.filename || doc.original_name || 'Untitled';
+  const getDocId = (doc) => doc.doc_id || doc.document_id || '';
+  const getDocHash = (doc) => doc.checksum_sha256 || doc.file_hash || '';
+
+  const filteredDocs = (documents || []).filter((doc) => {
+    const name = getDocName(doc).toLowerCase();
+    const type = (doc.file_type || '').toLowerCase();
+    const id = getDocId(doc).toLowerCase();
+    const q = filterText.toLowerCase();
+    return name.includes(q) || type.includes(q) || id.includes(q);
+  });
 
   const getFormatBadge = (type) => {
-    const ext = type.toLowerCase();
-    return <span className={`format-badge ${ext}`}>{ext}</span>;
+    const ext = (type || '').toLowerCase();
+    return <span className={`format-badge ${ext}`}>{ext || 'FILE'}</span>;
   };
 
   return (
@@ -38,20 +62,38 @@ export default function DocumentList({ documents, onDocumentDeleted }) {
           <p>Browse metadata records for all extracted, normalized, and vector-indexed project files.</p>
         </div>
 
-        <input
-          type="text"
-          className="input-field"
-          placeholder="🔍 Filter documents..."
-          value={filterText}
-          onChange={(e) => setFilterText(e.target.value)}
-          style={{ maxWidth: '260px' }}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {documents && documents.length > 0 && (
+            <button
+              className="btn-danger"
+              onClick={handleClearAll}
+              disabled={isClearingAll}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', padding: '8px 14px' }}
+            >
+              {isClearingAll ? 'Clearing...' : '🗑️ Clear All Documents'}
+            </button>
+          )}
+
+          <input
+            type="text"
+            className="input-field"
+            placeholder="🔍 Filter documents..."
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+            style={{ maxWidth: '240px' }}
+          />
+        </div>
       </div>
 
-      {documents.length === 0 ? (
-        <div style={{ padding: '40px', textAlignment: 'center', textAlign: 'center', color: 'var(--text-muted)' }}>
-          <p style={{ fontSize: '1rem', marginBottom: '8px' }}>No documents uploaded yet.</p>
-          <p style={{ fontSize: '0.84rem' }}>Upload PDF, DOCX, CSV, or TXT documents to populate the vector knowledge base.</p>
+      {!documents || documents.length === 0 ? (
+        <div style={{ padding: '50px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>📭</div>
+          <p style={{ fontSize: '1.05rem', fontWeight: '600', color: '#e2e8f0', marginBottom: '6px' }}>
+            No documents uploaded yet
+          </p>
+          <p style={{ fontSize: '0.85rem' }}>
+            Upload PDF, DOCX, CSV, or TXT documents to populate the vector knowledge base.
+          </p>
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
@@ -69,36 +111,44 @@ export default function DocumentList({ documents, onDocumentDeleted }) {
               </tr>
             </thead>
             <tbody>
-              {filteredDocs.map((doc) => (
-                <tr key={doc.doc_id}>
-                  <td>{getFormatBadge(doc.file_type)}</td>
-                  <td>
-                    <strong style={{ color: '#ffffff' }}>{doc.filename}</strong>
-                  </td>
-                  <td>
-                    <code style={{ fontSize: '0.78rem', color: 'var(--accent-cyan)' }}>{doc.doc_id}</code>
-                  </td>
-                  <td>{(doc.file_size_bytes / 1024).toFixed(1)} KB</td>
-                  <td>
-                    <span style={{ fontWeight: '700', color: 'var(--primary)' }}>{doc.chunk_count}</span>
-                  </td>
-                  <td>{doc.word_count.toLocaleString()} words</td>
-                  <td>
-                    <code style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                      {doc.checksum_sha256.substring(0, 10)}...
-                    </code>
-                  </td>
-                  <td>
-                    <button
-                      className="btn-danger"
-                      onClick={() => handleDelete(doc.doc_id, doc.filename)}
-                      disabled={deletingId === doc.doc_id}
-                    >
-                      {deletingId === doc.doc_id ? 'Deleting...' : '🗑️ Delete'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {filteredDocs.map((doc) => {
+                const docId = getDocId(doc);
+                const docName = getDocName(doc);
+                const docHash = getDocHash(doc);
+                return (
+                  <tr key={docId}>
+                    <td>{getFormatBadge(doc.file_type)}</td>
+                    <td>
+                      <strong style={{ color: '#ffffff' }}>{docName}</strong>
+                    </td>
+                    <td>
+                      <code style={{ fontSize: '0.78rem', color: 'var(--accent-cyan)' }}>
+                        {docId.substring(0, 12)}...
+                      </code>
+                    </td>
+                    <td>{doc.file_size_bytes ? (doc.file_size_bytes / 1024).toFixed(1) + ' KB' : '—'}</td>
+                    <td>
+                      <span style={{ fontWeight: '700', color: 'var(--primary)' }}>{doc.chunk_count ?? 0}</span>
+                    </td>
+                    <td>{doc.word_count ? doc.word_count.toLocaleString() : '—'}</td>
+                    <td>
+                      <code style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                        {docHash ? docHash.substring(0, 10) + '...' : '—'}
+                      </code>
+                    </td>
+                    <td>
+                      <button
+                        className="btn-danger"
+                        onClick={() => handleDelete(docId, docName)}
+                        disabled={deletingId === docId}
+                        style={{ padding: '5px 10px', fontSize: '0.8rem' }}
+                      >
+                        {deletingId === docId ? 'Deleting...' : '🗑️ Delete'}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

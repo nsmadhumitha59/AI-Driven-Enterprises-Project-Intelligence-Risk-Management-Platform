@@ -119,7 +119,7 @@ class ProjectIntelligenceChatAssistant(BaseAgent):
                 conversation_id=conv_id,
                 question=q_clean,
                 answer=(
-                    "I could not find any relevant project documents in the knowledge base. "
+                    "No relevant information found in the uploaded documents. "
                     "Please upload PDF, DOCX, CSV, or TXT project artifacts using the Ingestion tab first."
                 ),
                 source_references=[],
@@ -255,7 +255,7 @@ class ProjectIntelligenceChatAssistant(BaseAgent):
             blocker_res = self.blocker_agent.analyze(retrieval_chunks=retrieval_chunks)
 
             if not blocker_res.action_items:
-                answer = "No explicit pending action items were identified in the uploaded project documents."
+                answer = "No relevant information found in the uploaded documents regarding pending action items."
             else:
                 lines = [
                     f"### ✅ Pending Action Items & Next Steps ({len(blocker_res.action_items)})\n",
@@ -302,7 +302,7 @@ class ProjectIntelligenceChatAssistant(BaseAgent):
                     target = f" -> Target: {m.target_timeline}" if m.target_timeline else ""
                     lines.append(f"- **{m.title}**{target}")
 
-            answer = "\n".join(lines) if len(lines) > 2 else "No explicit deliverables or goals found in the documents."
+            answer = "\n".join(lines) if len(lines) > 2 else "No relevant information found in the uploaded documents regarding project deliverables or goals."
             followups = [
                 "Are we on track?",
                 "Generate user stories from deliverables",
@@ -336,8 +336,7 @@ class ProjectIntelligenceChatAssistant(BaseAgent):
             # Grounding validation threshold
             if (sig_terms and not has_term_overlap) or max_score < 0.20:
                 answer = (
-                    f"The uploaded project documents do not appear to contain sufficient information "
-                    f"to answer: *\"{q_clean}\"*.\n\n"
+                    f"No relevant information found in the uploaded documents for: *\"{q_clean}\"*.\n\n"
                     f"Currently indexed documents in the workspace: **{', '.join(grounded_docs) if grounded_docs else 'None'}**.\n"
                     f"Please upload relevant files or try rephrasing your question."
                 )

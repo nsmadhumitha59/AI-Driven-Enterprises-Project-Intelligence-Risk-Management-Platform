@@ -144,15 +144,16 @@ export default function DocumentUpload({ onUploadSuccess }) {
         </div>
       )}
 
-      {uploadResult && uploadResult.success && (
+      {uploadResult && (uploadResult.success || uploadResult.successful_count > 0) && (
         <div style={{ padding: '16px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', fontSize: '0.9rem' }}>
           <h4 style={{ fontWeight: '700', marginBottom: '8px' }}>
-            ✅ Ingestion Complete! Successfully indexed {uploadResult.total_uploaded} document(s).
+            ✅ Ingestion Complete! Successfully indexed {uploadResult.successful_count || uploadResult.total_uploaded || uploadResult.documents?.length || 1} document(s).
           </h4>
           <ul style={{ paddingLeft: '20px', fontSize: '0.84rem' }}>
-            {uploadResult.documents.map((doc) => (
-              <li key={doc.doc_id}>
-                <strong>{doc.filename}</strong>: {doc.chunk_count} text chunks indexed ({doc.char_count} chars, SHA: {doc.checksum_sha256.substring(0, 8)})
+            {(uploadResult.documents || []).map((doc, idx) => (
+              <li key={doc.document_id || doc.doc_id || idx} style={{ marginBottom: '4px' }}>
+                <strong>{doc.filename}</strong>: {doc.chunk_count} text chunks indexed ({doc.char_count ? doc.char_count.toLocaleString() + ' chars' : 'processed'})
+                {doc.status && <span style={{ marginLeft: '6px', fontSize: '0.78rem', opacity: 0.85 }}>[{doc.status}]</span>}
               </li>
             ))}
           </ul>

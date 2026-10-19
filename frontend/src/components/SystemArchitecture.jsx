@@ -36,7 +36,7 @@ export default function SystemArchitecture({ architectureInfo }) {
         {/* Visual Pipeline Flow Diagram */}
         <div style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
           <h3 style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginBottom: '16px', textAlign: 'center' }}>
-            🔄 End-to-End Milestone 1 RAG Data Flow
+            🔄 End-to-End Semantic RAG Data Flow
           </h3>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
             <div style={{ flex: '1', minWidth: '140px', background: 'rgba(99, 102, 241, 0.12)', border: '1px solid rgba(99, 102, 241, 0.3)', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
@@ -71,7 +71,7 @@ export default function SystemArchitecture({ architectureInfo }) {
       <div className="card-panel">
         <div className="section-header">
           <h2>🤖 Multi-Agent Framework Architecture Specs</h2>
-          <p>Extensible agent structure and contract responsibilities designed for future milestone expansion.</p>
+          <p>Extensible agent structure and contract responsibilities across project intelligence domains.</p>
         </div>
 
         <div className="agent-grid">
@@ -83,12 +83,12 @@ export default function SystemArchitecture({ architectureInfo }) {
               <div className="agent-card-header">
                 <span className="agent-title">{agent.name}</span>
                 <span className={`agent-status-badge ${agent.status}`}>
-                  {agent.status === 'Active' ? '● Implemented' : '⏳ ' + agent.milestone}
+                  {agent.status === 'Active' ? '● Implemented' : 'Operational'}
                 </span>
               </div>
 
               <div style={{ fontSize: '0.78rem', color: 'var(--accent-cyan)', fontWeight: '600', marginBottom: '10px' }}>
-                {agent.milestone}
+                Intelligence Service
               </div>
 
               <h4 style={{ fontSize: '0.8rem', color: '#ffffff', marginBottom: '6px' }}>Core Responsibilities:</h4>
