@@ -265,11 +265,11 @@ def cmd_clear(args):
 
 
 def cmd_dashboard(args):
-    """Executes Milestone 4 Executive Project Insights & Risk Summary Dashboard from CLI."""
+    """Executes Executive Project Insights & Risk Summary Dashboard from CLI."""
     from src.api.m4_routes import _build_dashboard_payload
     
     print("\n=======================================================")
-    print(f"📊 MILESTONE 4: EXECUTIVE PROJECT INTELLIGENCE & RISK DASHBOARD")
+    print(f"📊 EXECUTIVE PROJECT INTELLIGENCE & RISK DASHBOARD")
     print(f"=======================================================")
     
     focus_query = args.focus
@@ -294,6 +294,15 @@ def cmd_dashboard(args):
             print("  Factors:")
             for f in factors[:3]:
                 print(f"    - {f}")
+
+    if hasattr(res.risks, "risk_matrix") and res.risks.risk_matrix:
+        rm = res.risks.risk_matrix
+        qc = rm.get("quadrant_counts", {})
+        print(f"\n🎯 Risk Priority Matrix ({rm.get('total_plotted', 0)} Plotted):")
+        print(f"  • [Critical Action Zone]  (High Prob / High Impact): {qc.get('critical_action', 0)} risks")
+        print(f"  • [Contingency Zone]      (Low Prob / High Impact):  {qc.get('contingency', 0)} risks")
+        print(f"  • [Mitigate Zone]         (High Prob / Low Impact):  {qc.get('mitigate', 0)} risks")
+        print(f"  • [Routine Monitoring]    (Low Prob / Low Impact):   {qc.get('routine', 0)} risks")
                 
     goals = res.scope.project_goals or res.scope.goals
     if goals:

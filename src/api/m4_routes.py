@@ -433,3 +433,120 @@ async def clear_all_m4_documents():
         "cleared_count": cleared
     }
 
+
+@router.get(
+    "/risk-matrix",
+    summary="Get Structured Risk Priority Matrix Graph Data",
+    description="Returns interactive risk priority matrix coordinates, quadrant breakdowns, and plotted risks."
+)
+async def get_risk_matrix(query_context: Optional[str] = None):
+    try:
+        risk_res = _risk_agent.analyze(query_context=query_context)
+        return {
+            "status": "success",
+            "total_risks": risk_res.total_risks_detected,
+            "forecast_status": risk_res.forecast.overall_status.value if hasattr(risk_res.forecast.overall_status, "value") else str(risk_res.forecast.overall_status),
+            "slippage_probability": risk_res.forecast.slippage_probability,
+            "risk_matrix": risk_res.risk_matrix,
+            "detected_risks": [r.dict() for r in risk_res.detected_risks]
+        }
+    except Exception as e:
+        logger.error(f"Failed to generate risk matrix: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Risk matrix generation failed: {str(e)}"
+        )
+
+
+@router.get(
+    "/risk-matrix/svg",
+    summary="Generate Interactive Vector SVG of Risk Priority Matrix",
+    description="Renders a standalone, high-resolution SVG graph of the Risk Priority Matrix."
+)
+async def get_risk_matrix_svg(query_context: Optional[str] = None):
+    from fastapi.responses import Response
+    try:
+        risk_res = _risk_agent.analyze(query_context=query_context)
+        points = risk_res.risk_matrix.get("points", [])
+        
+        # SVG layout constants
+        width, height = 700, 460
+        margin_left, margin_right = 70, 40
+        margin_top, margin_bottom = 40, 60
+        plot_w = width - margin_left - margin_right
+        plot_h = height - margin_top - margin_bottom
+
+        def get_x(prob_pct):
+            return margin_left + (prob_pct / 100.0) * plot_w
+
+        def get_y(impact_pct):
+            return margin_top + ((100.0 - impact_pct) / 100.0) * plot_h
+
+        svg_parts = [
+            f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="100%" height="100%" style="background: #0f172a; font-family: system-ui, -apple-system, sans-serif;">',
+            '<defs>',
+            '  <linearGradient id="qCritical" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ef4444" stop-opacity="0.22"/><stop offset="100%" stop-color="#ef4444" stop-opacity="0.05"/></linearGradient>',
+            '  <linearGradient id="qContingency" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f59e0b" stop-opacity="0.18"/><stop offset="100%" stop-color="#f59e0b" stop-opacity="0.04"/></linearGradient>',
+            '  <linearGradient id="qMitigate" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#06b6d4" stop-opacity="0.18"/><stop offset="100%" stop-color="#06b6d4" stop-opacity="0.04"/></linearGradient>',
+            '  <linearGradient id="qRoutine" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#10b981" stop-opacity="0.16"/><stop offset="100%" stop-color="#10b981" stop-opacity="0.04"/></linearGradient>',
+            '  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>',
+            '</defs>',
+            # Title
+            f'<text x="{width/2}" y="26" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="700">🎯 Project Intelligence — Risk Priority Matrix</text>',
+            # Quadrants
+            f'<rect x="{get_x(50)}" y="{margin_top}" width="{plot_w/2}" height="{plot_h/2}" fill="url(#qCritical)" rx="6"/>',
+            f'<rect x="{margin_left}" y="{margin_top}" width="{plot_w/2}" height="{plot_h/2}" fill="url(#qContingency)" rx="6"/>',
+            f'<rect x="{get_x(50)}" y="{get_y(50)}" width="{plot_w/2}" height="{plot_h/2}" fill="url(#qMitigate)" rx="6"/>',
+            f'<rect x="{margin_left}" y="{get_y(50)}" width="{plot_w/2}" height="{plot_h/2}" fill="url(#qRoutine)" rx="6"/>',
+            # Quadrant Labels
+            f'<text x="{get_x(75)}" y="{margin_top + 22}" text-anchor="middle" fill="#f87171" font-size="11" font-weight="700">CRITICAL ACTION ZONE</text>',
+            f'<text x="{get_x(25)}" y="{margin_top + 22}" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700">HIGH IMPACT / CONTINGENCY</text>',
+            f'<text x="{get_x(75)}" y="{margin_top + plot_h - 14}" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="700">HIGH PROB / MITIGATE</text>',
+            f'<text x="{get_x(25)}" y="{margin_top + plot_h - 14}" text-anchor="middle" fill="#34d399" font-size="11" font-weight="700">ROUTINE MONITORING</text>',
+        ]
+
+        # Grid lines
+        for tick in [0, 25, 50, 75, 100]:
+            y = get_y(tick)
+            dash = "4,4" if tick == 50 else "2,2"
+            opacity = "0.28" if tick == 50 else "0.10"
+            svg_parts.append(f'<line x1="{margin_left}" y1="{y}" x2="{margin_left + plot_w}" y2="{y}" stroke="#ffffff" stroke-opacity="{opacity}" stroke-dasharray="{dash}"/>')
+            svg_parts.append(f'<text x="{margin_left - 10}" y="{y + 4}" text-anchor="end" fill="#94a3b8" font-size="10">{tick}%</text>')
+
+            x = get_x(tick)
+            svg_parts.append(f'<line x1="{x}" y1="{margin_top}" x2="{x}" y2="{margin_top + plot_h}" stroke="#ffffff" stroke-opacity="{opacity}" stroke-dasharray="{dash}"/>')
+            svg_parts.append(f'<text x="{x}" y="{margin_top + plot_h + 18}" text-anchor="middle" fill="#94a3b8" font-size="10">{tick}%</text>')
+
+        # Axes titles
+        svg_parts.append(f'<text x="-{margin_top + plot_h/2}" y="20" transform="rotate(-90)" text-anchor="middle" fill="#cbd5e1" font-size="12" font-weight="700" letter-spacing="1">▲ IMPACT</text>')
+        svg_parts.append(f'<text x="{margin_left + plot_w/2}" y="{margin_top + plot_h + 42}" text-anchor="middle" fill="#cbd5e1" font-size="12" font-weight="700" letter-spacing="1">PROBABILITY ►</text>')
+
+        # Points
+        color_map = {
+            "CRITICAL": "#ef4444",
+            "HIGH": "#f97316",
+            "MEDIUM": "#06b6d4",
+            "LOW": "#10b981"
+        }
+        for pt in points:
+            cx = get_x(pt.get("probability_pct", 50))
+            cy = get_y(pt.get("impact_pct", 50))
+            lvl = pt.get("level", "MEDIUM").upper()
+            col = color_map.get(lvl, "#6366f1")
+            r = 12 if lvl == "CRITICAL" else 10 if lvl == "HIGH" else 8.5
+            rid = pt.get("risk_id", "")
+            title = pt.get("title", "")
+            svg_parts.append(f'<circle cx="{cx}" cy="{cy}" r="{r+4}" fill="none" stroke="{col}" stroke-opacity="0.4" stroke-width="1.5"/>')
+            svg_parts.append(f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{col}" filter="url(#glow)" stroke="#ffffff" stroke-width="1.2"><title>{rid}: {title} ({lvl}) - Prob: {pt.get("probability_pct")}% Impact: {pt.get("impact_pct")}%</title></circle>')
+            svg_parts.append(f'<text x="{cx + r + 5}" y="{cy + 3.5}" fill="#f1f5f9" font-size="9" font-weight="600">{rid}</text>')
+
+        svg_parts.append('</svg>')
+        svg_content = "\n".join(svg_parts)
+        return Response(content=svg_content, media_type="image/svg+xml")
+    except Exception as e:
+        logger.error(f"Failed to generate risk matrix SVG: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"SVG generation failed: {str(e)}"
+        )
+

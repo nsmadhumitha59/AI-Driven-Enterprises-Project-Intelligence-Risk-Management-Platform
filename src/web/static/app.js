@@ -1259,9 +1259,71 @@ document.addEventListener("DOMContentLoaded", () => {
     const activeBlockers = blockersActions.active_blockers || blockersActions.blockers || [];
     const actionItems = blockersActions.action_items || [];
 
-    const filteredRisks = currentRiskFilter === "ALL"
-      ? detectedRisks
-      : detectedRisks.filter(r => (r.level || "").toUpperCase() === currentRiskFilter);
+    const slippageProb = forecast.slippage_probability || 0.35;
+    const enrichedRisks = detectedRisks.map((r, idx) => {
+      const lvl = (r.level?.value || r.level || 'MEDIUM').toUpperCase();
+      let explicitProb = typeof r.probability === 'number' ? (r.probability <= 1 ? r.probability * 100 : r.probability) : null;
+      let explicitImpact = typeof r.impact_score === 'number' ? (r.impact_score <= 1 ? r.impact_score * 100 : r.impact_score) : null;
+
+      const seedStr = (r.risk_id || '') + (r.title || '') + (r.reason || '');
+      let hash = idx * 37;
+      for (let i = 0; i < seedStr.length; i++) {
+        hash = ((hash << 5) - hash) + seedStr.charCodeAt(i);
+        hash |= 0;
+      }
+      const absHash = Math.abs(hash);
+      const jitterX = ((absHash % 19) - 9) * 0.85;
+      const jitterY = (((Math.floor(absHash / 19)) % 19) - 9) * 0.85;
+
+      let baseProb = 50, baseImpact = 50;
+      if (lvl === 'CRITICAL') { baseProb = 80 + (slippageProb * 12); baseImpact = 86; }
+      else if (lvl === 'HIGH') { baseProb = 65 + (slippageProb * 10); baseImpact = 72; }
+      else if (lvl === 'MEDIUM') { baseProb = 46 + (slippageProb * 6); baseImpact = 50; }
+      else { baseProb = 24; baseImpact = 26; }
+
+      const prob = explicitProb !== null ? Math.round(explicitProb) : Math.max(12, Math.min(94, Math.round(baseProb + jitterX)));
+      const impact = explicitImpact !== null ? Math.round(explicitImpact) : Math.max(12, Math.min(94, Math.round(baseImpact + jitterY)));
+
+      return {
+        ...r,
+        cleanLevel: lvl,
+        calcProb: prob,
+        calcImpact: impact,
+        displayId: r.risk_id || `RSK-${idx + 1}`
+      };
+    });
+
+    const criticalCount = enrichedRisks.filter(r => r.cleanLevel === 'CRITICAL').length;
+    const highCount = enrichedRisks.filter(r => r.cleanLevel === 'HIGH').length;
+    const mediumCount = enrichedRisks.filter(r => r.cleanLevel === 'MEDIUM').length;
+    const lowCount = enrichedRisks.filter(r => r.cleanLevel === 'LOW').length;
+
+    const filteredRisks = currentRiskFilter === 'ALL'
+      ? enrichedRisks
+      : enrichedRisks.filter(r => r.cleanLevel === currentRiskFilter);
+
+    // SVG layout constants
+    const SVG_WIDTH = 600;
+    const SVG_HEIGHT = 380;
+    const MARGIN_LEFT = 60;
+    const MARGIN_RIGHT = 30;
+    const MARGIN_TOP = 25;
+    const MARGIN_BOTTOM = 45;
+    const PLOT_WIDTH = SVG_WIDTH - MARGIN_LEFT - MARGIN_RIGHT;
+    const PLOT_HEIGHT = SVG_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM;
+
+    const getSvgX = (prob) => MARGIN_LEFT + (prob / 100) * PLOT_WIDTH;
+    const getSvgY = (impact) => MARGIN_TOP + ((100 - impact) / 100) * PLOT_HEIGHT;
+
+    const getSeverityColor = (lvl) => {
+      switch ((lvl || '').toUpperCase()) {
+        case 'CRITICAL': return '#ef4444';
+        case 'HIGH': return '#f97316';
+        case 'MEDIUM': return '#06b6d4';
+        case 'LOW': return '#10b981';
+        default: return '#6366f1';
+      }
+    };
 
     const healthScore = Math.round(health.overall_health_score || 0);
     const healthBadge = healthScore >= 80 ? "health-badge-good" : (healthScore >= 60 ? "health-badge-warning" : "health-badge-critical");
@@ -1426,6 +1488,182 @@ document.addEventListener("DOMContentLoaded", () => {
             <p style="margin-top: 8px; line-height: 1.55; font-size: 0.88rem; color: #e2e8f0;">
               ${escapeHtml(data.executive_summary || 'Analysis complete.')}
             </p>
+          </div>
+        </div>
+
+        <!-- 3. INTERACTIVE RISK PRIORITY MATRIX GRAPH -->
+        <div class="matrix-health-row">
+          <div class="card-panel matrix-panel">
+            <div class="matrix-header">
+              <div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <h3 style="font-size: 1.25rem; font-weight: 700; color: #ffffff;">
+                    🎯 Risk Priority Matrix
+                  </h3>
+                  <span class="badge-count" id="matrixPlottedCount">${filteredRisks.length} Plotted</span>
+                </div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+                  Interactive Scatter Bubble Graph: Probability (X-axis) vs. Impact (Y-axis)
+                </p>
+              </div>
+
+              <!-- Filter Buttons -->
+              <div class="matrix-filter-buttons">
+                ${[
+                  { id: 'ALL', label: 'All', count: enrichedRisks.length },
+                  { id: 'CRITICAL', label: 'Critical', count: criticalCount },
+                  { id: 'HIGH', label: 'High', count: highCount },
+                  { id: 'MEDIUM', label: 'Medium', count: mediumCount },
+                  { id: 'LOW', label: 'Low', count: lowCount },
+                ].map((item) => `
+                  <button
+                    type="button"
+                    class="matrix-filter-btn filter-btn-${item.id.toLowerCase()} ${currentRiskFilter === item.id ? 'active' : ''}"
+                    data-matrix-filter="${item.id}"
+                  >
+                    ${item.label} (${item.count})
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Interactive Canvas Container -->
+            <div class="matrix-canvas-wrapper" id="matrixCanvasWrapper">
+              <svg viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}" class="matrix-svg-graph" id="matrixSvg">
+                <defs>
+                  <linearGradient id="gradTopRight" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ef4444" stop-opacity="0.14" />
+                    <stop offset="100%" stop-color="#ef4444" stop-opacity="0.04" />
+                  </linearGradient>
+                  <linearGradient id="gradTopLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.12" />
+                    <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.03" />
+                  </linearGradient>
+                  <linearGradient id="gradBottomRight" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.11" />
+                    <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.03" />
+                  </linearGradient>
+                  <linearGradient id="gradBottomLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#10b981" stop-opacity="0.10" />
+                    <stop offset="100%" stop-color="#10b981" stop-opacity="0.02" />
+                  </linearGradient>
+
+                  <filter id="glowCritical" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                  <filter id="glowHigh" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                  <filter id="glowMedium" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                  <filter id="glowLow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+
+                <!-- 4 Quadrants Background Areas -->
+                <rect x="${getSvgX(50)}" y="${MARGIN_TOP}" width="${PLOT_WIDTH / 2}" height="${PLOT_HEIGHT / 2}" fill="url(#gradTopRight)" rx="4" />
+                <rect x="${MARGIN_LEFT}" y="${MARGIN_TOP}" width="${PLOT_WIDTH / 2}" height="${PLOT_HEIGHT / 2}" fill="url(#gradTopLeft)" rx="4" />
+                <rect x="${getSvgX(50)}" y="${getSvgY(50)}" width="${PLOT_WIDTH / 2}" height="${PLOT_HEIGHT / 2}" fill="url(#gradBottomRight)" rx="4" />
+                <rect x="${MARGIN_LEFT}" y="${getSvgY(50)}" width="${PLOT_WIDTH / 2}" height="${PLOT_HEIGHT / 2}" fill="url(#gradBottomLeft)" rx="4" />
+
+                <!-- Quadrant Labels -->
+                <text x="${getSvgX(75)}" y="${MARGIN_TOP + 18}" text-anchor="middle" fill="rgba(244, 63, 94, 0.75)" font-size="10" font-weight="700" letter-spacing="0.5">CRITICAL ACTION ZONE</text>
+                <text x="${getSvgX(25)}" y="${MARGIN_TOP + 18}" text-anchor="middle" fill="rgba(245, 158, 11, 0.75)" font-size="10" font-weight="700" letter-spacing="0.5">HIGH IMPACT / CONTINGENCY</text>
+                <text x="${getSvgX(75)}" y="${MARGIN_TOP + PLOT_HEIGHT - 12}" text-anchor="middle" fill="rgba(6, 182, 212, 0.75)" font-size="10" font-weight="700" letter-spacing="0.5">HIGH PROB / MITIGATE</text>
+                <text x="${getSvgX(25)}" y="${MARGIN_TOP + PLOT_HEIGHT - 12}" text-anchor="middle" fill="rgba(16, 185, 129, 0.75)" font-size="10" font-weight="700" letter-spacing="0.5">ROUTINE MONITORING</text>
+
+                <!-- Grid lines for Y (Impact) -->
+                ${[0, 25, 50, 75, 100].map(tick => {
+                  const y = getSvgY(tick);
+                  const isMid = tick === 50;
+                  return `
+                    <line x1="${MARGIN_LEFT}" y1="${y}" x2="${MARGIN_LEFT + PLOT_WIDTH}" y2="${y}" stroke="${isMid ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.08)'}" stroke-dasharray="${isMid ? '4,4' : '2,2'}" stroke-width="${isMid ? '1.5' : '1'}" />
+                    <text x="${MARGIN_LEFT - 8}" y="${y + 3.5}" text-anchor="end" fill="#94a3b8" font-size="9.5" font-family="monospace">${tick}%</text>
+                  `;
+                }).join('')}
+
+                <!-- Grid lines for X (Probability) -->
+                ${[0, 25, 50, 75, 100].map(tick => {
+                  const x = getSvgX(tick);
+                  const isMid = tick === 50;
+                  return `
+                    <line x1="${x}" y1="${MARGIN_TOP}" x2="${x}" y2="${MARGIN_TOP + PLOT_HEIGHT}" stroke="${isMid ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.08)'}" stroke-dasharray="${isMid ? '4,4' : '2,2'}" stroke-width="${isMid ? '1.5' : '1'}" />
+                    <text x="${x}" y="${MARGIN_TOP + PLOT_HEIGHT + 16}" text-anchor="middle" fill="#94a3b8" font-size="9.5" font-family="monospace">${tick}%</text>
+                  `;
+                }).join('')}
+
+                <!-- Axes -->
+                <line x1="${MARGIN_LEFT}" y1="${MARGIN_TOP}" x2="${MARGIN_LEFT}" y2="${MARGIN_TOP + PLOT_HEIGHT}" stroke="rgba(255, 255, 255, 0.3)" stroke-width="1.5" />
+                <line x1="${MARGIN_LEFT}" y1="${MARGIN_TOP + PLOT_HEIGHT}" x2="${MARGIN_LEFT + PLOT_WIDTH}" y2="${MARGIN_TOP + PLOT_HEIGHT}" stroke="rgba(255, 255, 255, 0.3)" stroke-width="1.5" />
+
+                <!-- Axes Labels -->
+                <text x="-${MARGIN_TOP + PLOT_HEIGHT / 2}" y="18" transform="rotate(-90)" text-anchor="middle" fill="#cbd5e1" font-size="11" font-weight="700" letter-spacing="1">▲ IMPACT</text>
+                <text x="${MARGIN_LEFT + PLOT_WIDTH / 2}" y="${MARGIN_TOP + PLOT_HEIGHT + 34}" text-anchor="middle" fill="#cbd5e1" font-size="11" font-weight="700" letter-spacing="1">PROBABILITY ►</text>
+
+                <!-- Plotted Risk Nodes -->
+                ${filteredRisks.map((risk, idx) => {
+                  const cx = getSvgX(risk.calcProb);
+                  const cy = getSvgY(risk.calcImpact);
+                  const color = getSeverityColor(risk.cleanLevel);
+                  const baseRadius = risk.cleanLevel === 'CRITICAL' ? 12 : (risk.cleanLevel === 'HIGH' ? 10.5 : (risk.cleanLevel === 'MEDIUM' ? 9 : 8));
+                  const filterId = risk.cleanLevel === 'CRITICAL' ? 'glowCritical' : (risk.cleanLevel === 'HIGH' ? 'glowHigh' : (risk.cleanLevel === 'LOW' ? 'glowLow' : 'glowMedium'));
+                  return `
+                    <g class="risk-svg-node" data-risk-idx="${idx}">
+                      ${risk.cleanLevel === 'CRITICAL' || risk.cleanLevel === 'HIGH' ? `
+                        <circle cx="${cx}" cy="${cy}" r="${baseRadius + 5}" fill="none" stroke="${color}" stroke-width="1.5" stroke-opacity="0.4" />
+                      ` : ''}
+                      <circle cx="${cx}" cy="${cy}" r="${baseRadius}" fill="${color}" filter="url(#${filterId})" stroke="#ffffff" stroke-width="1.2" stroke-opacity="0.8" />
+                      <text x="${cx + baseRadius + 5}" y="${cy + 3.5}" fill="#f8fafc" font-size="9.5" font-family="monospace" font-weight="600" style="pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.9);">${escapeHtml(risk.displayId)}</text>
+                    </g>
+                  `;
+                }).join('')}
+              </svg>
+
+              <!-- Hover Tooltip Container -->
+              <div class="matrix-hover-tooltip" id="matrixHoverTooltip"></div>
+            </div>
+
+            <!-- Severity Legend Row -->
+            <div class="matrix-legend-row">
+              <span style="font-size: 0.78rem; color: var(--text-dim); font-weight: 700;">SEVERITY LEGEND:</span>
+              <div class="legend-item" data-matrix-filter="CRITICAL">
+                <span class="legend-dot dot-critical"></span>
+                <span>Critical (${criticalCount})</span>
+              </div>
+              <div class="legend-item" data-matrix-filter="HIGH">
+                <span class="legend-dot dot-high"></span>
+                <span>High (${highCount})</span>
+              </div>
+              <div class="legend-item" data-matrix-filter="MEDIUM">
+                <span class="legend-dot dot-medium"></span>
+                <span>Medium (${mediumCount})</span>
+              </div>
+              <div class="legend-item" data-matrix-filter="LOW">
+                <span class="legend-dot dot-low"></span>
+                <span>Low (${lowCount})</span>
+              </div>
+            </div>
+
+            <!-- Selected Risk Inspector Panel -->
+            <div id="matrixSelectedInspector"></div>
           </div>
         </div>
 
@@ -1673,6 +1911,105 @@ document.addEventListener("DOMContentLoaded", () => {
         currentRiskFilter = chip.getAttribute("data-level");
         if (currentDashboardData) {
           renderM4Dashboard(currentDashboardData, focusQuery);
+        }
+      });
+    });
+
+    // Risk Priority Matrix filter buttons & legend filters
+    document.querySelectorAll("[data-matrix-filter]").forEach(el => {
+      el.addEventListener("click", () => {
+        currentRiskFilter = el.getAttribute("data-matrix-filter");
+        if (currentDashboardData) {
+          renderM4Dashboard(currentDashboardData, focusQuery);
+        }
+      });
+    });
+
+    // Risk Priority Matrix Interactive Hover Tooltip & Click Inspector
+    const tooltip = document.getElementById("matrixHoverTooltip");
+    const inspector = document.getElementById("matrixSelectedInspector");
+    const canvasWrapper = document.getElementById("matrixCanvasWrapper");
+
+    const allRisks = (currentDashboardData && currentDashboardData.risks && currentDashboardData.risks.detected_risks) || [];
+    const activeFilteredRisks = currentRiskFilter === "ALL"
+      ? allRisks
+      : allRisks.filter(r => (r.level?.value || r.level || '').toUpperCase() === currentRiskFilter);
+
+    document.querySelectorAll(".risk-svg-node[data-risk-idx]").forEach(node => {
+      const idx = parseInt(node.getAttribute("data-risk-idx"), 10);
+      const risk = activeFilteredRisks[idx];
+      if (!risk) return;
+
+      node.addEventListener("mouseenter", (e) => {
+        if (!tooltip || !canvasWrapper) return;
+        const rect = canvasWrapper.getBoundingClientRect();
+        const clientX = e.clientX - rect.left;
+        const clientY = e.clientY - rect.top;
+
+        const lvl = (risk.level?.value || risk.level || 'MEDIUM').toUpperCase();
+        const prob = typeof risk.probability === 'number' ? Math.round(risk.probability <= 1 ? risk.probability * 100 : risk.probability) : 50;
+        const impact = typeof risk.impact_score === 'number' ? Math.round(risk.impact_score <= 1 ? risk.impact_score * 100 : risk.impact_score) : 50;
+        const rid = risk.risk_id || `RSK-${idx + 1}`;
+
+        tooltip.innerHTML = `
+          <div class="tooltip-header">
+            <span class="risk-tag risk-tag-${lvl.toLowerCase()}">${lvl}</span>
+            <strong style="color: #ffffff;">${escapeHtml(rid)}</strong>
+          </div>
+          <div class="tooltip-title">${escapeHtml(risk.title)}</div>
+          <div class="tooltip-metrics">
+            <span>📊 Probability: <strong style="color: #38bdf8;">${prob}%</strong></span>
+            <span>💥 Impact: <strong style="color: #f87171;">${impact}%</strong></span>
+          </div>
+          ${risk.category ? `<div class="tooltip-cat">Category: ${escapeHtml(risk.category.value || risk.category)}</div>` : ''}
+        `;
+        tooltip.style.left = `${Math.min(rect.width - 240, Math.max(10, clientX + 15))}px`;
+        tooltip.style.top = `${Math.max(10, clientY - 80)}px`;
+        tooltip.style.display = "block";
+      });
+
+      node.addEventListener("mouseleave", () => {
+        if (tooltip) tooltip.style.display = "none";
+      });
+
+      node.addEventListener("click", () => {
+        if (!inspector) return;
+        const lvl = (risk.level?.value || risk.level || 'MEDIUM').toUpperCase();
+        const prob = typeof risk.probability === 'number' ? Math.round(risk.probability <= 1 ? risk.probability * 100 : risk.probability) : 50;
+        const impact = typeof risk.impact_score === 'number' ? Math.round(risk.impact_score <= 1 ? risk.impact_score * 100 : risk.impact_score) : 50;
+        const rid = risk.risk_id || `RSK-${idx + 1}`;
+
+        inspector.innerHTML = `
+          <div class="matrix-selected-inspector">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="risk-tag risk-tag-${lvl.toLowerCase()}">${lvl}</span>
+                <span style="color: #ffffff; font-weight: 700; font-size: 0.95rem;">
+                  ${escapeHtml(rid)}: ${escapeHtml(risk.title)}
+                </span>
+              </div>
+              <button type="button" class="btn-icon-close" id="btnCloseInspector" title="Close Inspector">✕</button>
+            </div>
+            <p style="font-size: 0.84rem; color: var(--text-muted); margin-top: 8px; line-height: 1.5;">
+              ${escapeHtml(risk.reason)}
+            </p>
+            <div style="display: flex; gap: 20px; margin-top: 10px; font-size: 0.82rem; flex-wrap: wrap;">
+              <span>🎯 Probability: <strong style="color: #38bdf8;">${prob}%</strong></span>
+              <span>💥 Impact: <strong style="color: #f87171;">${impact}%</strong></span>
+              ${risk.source_document ? `<span style="color: var(--text-dim);">📄 Provenance: ${escapeHtml(risk.source_document)}</span>` : ''}
+            </div>
+            ${risk.suggested_mitigation ? `
+              <div class="risk-mitigation-box" style="margin-top: 10px;">
+                🛡️ <strong>Suggested Mitigation:</strong> ${escapeHtml(risk.suggested_mitigation)}
+              </div>
+            ` : ''}
+          </div>
+        `;
+        const btnClose = document.getElementById("btnCloseInspector");
+        if (btnClose) {
+          btnClose.addEventListener("click", () => {
+            inspector.innerHTML = "";
+          });
         }
       });
     });

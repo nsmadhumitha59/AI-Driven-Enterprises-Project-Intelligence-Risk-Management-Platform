@@ -249,3 +249,22 @@ class TestMilestone4APIRoutes:
         assert data["new_chunks_indexed"] > 0
         assert data["total_documents_count"] >= 1
         assert len(data["documents"]) == 1
+
+    def test_get_risk_matrix_endpoint(self, client: TestClient):
+        response = client.get("/api/v1/m4/risk-matrix")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+        assert "risk_matrix" in data
+        assert "points" in data["risk_matrix"]
+        assert "quadrant_counts" in data["risk_matrix"]
+
+    def test_get_risk_matrix_svg_endpoint(self, client: TestClient):
+        response = client.get("/api/v1/m4/risk-matrix/svg")
+        assert response.status_code == 200
+        assert response.headers["content-type"].startswith("image/svg+xml")
+        svg_content = response.text
+        assert "<svg" in svg_content
+        assert "Risk Priority Matrix" in svg_content
+        assert "CRITICAL ACTION ZONE" in svg_content
+

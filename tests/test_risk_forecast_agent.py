@@ -62,3 +62,18 @@ class TestRiskForecastAgent:
         assert result.forecast.overall_status in [DeliveryStatus.AT_RISK, DeliveryStatus.DELAYED, DeliveryStatus.ON_TRACK]
         assert result.forecast.slippage_probability > 0.0
         assert len(result.forecast.key_forecast_factors) > 0
+
+        # Verify Risk Priority Matrix coordinates & data
+        assert "points" in result.risk_matrix
+        assert len(result.risk_matrix["points"]) >= 3
+        for pt in result.risk_matrix["points"]:
+            assert 0.0 <= pt["probability"] <= 1.0
+            assert 0.0 <= pt["impact_score"] <= 1.0
+            assert pt["quadrant"] in [
+                "Critical Action Zone",
+                "High Impact / Contingency",
+                "High Prob / Mitigate",
+                "Routine Monitoring"
+            ]
+        assert "quadrant_counts" in result.risk_matrix
+        assert result.risk_matrix["total_plotted"] >= 3
