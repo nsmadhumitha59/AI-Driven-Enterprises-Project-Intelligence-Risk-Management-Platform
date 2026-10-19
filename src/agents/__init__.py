@@ -34,6 +34,8 @@ from .blocker_action_agent import (
     ActionItemPriority
 )
 from .orchestrator import (
+    MultiAgentPipeline,
+    MultiAgentAnalysisResult,
     Milestone2MultiAgentPipeline,
     Milestone2AnalysisResult
 )
@@ -85,6 +87,8 @@ __all__ = [
     "UnresolvedIssue",
     "ActionItem",
     "ActionItemPriority",
+    "MultiAgentPipeline",
+    "MultiAgentAnalysisResult",
     "Milestone2MultiAgentPipeline",
     "Milestone2AnalysisResult",
     "DocumentationGenerationAgent",

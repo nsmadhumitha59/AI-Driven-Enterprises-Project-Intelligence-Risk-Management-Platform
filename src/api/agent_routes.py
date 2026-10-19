@@ -1,5 +1,5 @@
 """
-FastAPI Routes for Milestone 2 Multi-Agent Intelligence Services.
+FastAPI Routes for Multi-Agent Intelligence Services.
 """
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Query, status
@@ -12,8 +12,8 @@ from src.agents import (
     RiskForecastResult,
     BlockerActionAgent,
     BlockerActionResult,
-    Milestone2MultiAgentPipeline,
-    Milestone2AnalysisResult
+    MultiAgentPipeline,
+    MultiAgentAnalysisResult
 )
 from src.rag.retriever import SemanticRetriever
 from src.rag.embeddings import EmbeddingService
@@ -29,7 +29,7 @@ retriever = SemanticRetriever(
 scope_agent = ScopeExtractionAgent(retriever=retriever)
 risk_agent = RiskForecastAgent(retriever=retriever)
 blocker_agent = BlockerActionAgent(retriever=retriever)
-pipeline = Milestone2MultiAgentPipeline(retriever=retriever)
+pipeline = MultiAgentPipeline(retriever=retriever)
 
 
 class AgentExecutionRequest(BaseModel):
@@ -111,8 +111,8 @@ async def run_blocker_action_agent(request: Optional[AgentExecutionRequest] = No
 
 @router.post(
     "/analyze-all",
-    response_model=Milestone2AnalysisResult,
-    summary="Run Full Milestone 2 Multi-Agent Pipeline",
+    response_model=MultiAgentAnalysisResult,
+    summary="Run Full Multi-Agent Intelligence Pipeline",
     description="Orchestrates Scope, Risk/Forecast, and Blocker/Action agents across the knowledge base to generate comprehensive structured intelligence."
 )
 async def run_all_agents(request: Optional[AgentExecutionRequest] = None):
@@ -123,5 +123,5 @@ async def run_all_agents(request: Optional[AgentExecutionRequest] = None):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Milestone 2 Multi-Agent Pipeline failed: {str(e)}"
+            detail=f"Multi-Agent Pipeline failed: {str(e)}"
         )

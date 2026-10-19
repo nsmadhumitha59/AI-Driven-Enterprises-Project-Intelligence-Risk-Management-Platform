@@ -1,5 +1,5 @@
 """
-FastAPI REST Routes for Milestone 4: Executive Insights & Risk Summary Dashboard,
+FastAPI REST Routes for Executive Insights & Risk Summary Dashboard,
 Incremental Upload Management, and End-to-End Orchestration.
 """
 import logging
@@ -37,7 +37,7 @@ _blocker_agent = BlockerActionAgent(retriever=_retriever)
 
 
 # =====================================================================
-# Pydantic Schemas for Milestone 4 Dashboard
+# Pydantic Schemas for Executive Dashboard
 # =====================================================================
 
 class DocumentSummary(BaseModel):
@@ -70,7 +70,7 @@ class DashboardFilterRequest(BaseModel):
 
 
 class ProjectDashboardResponse(BaseModel):
-    """Unified Milestone 4 Executive Project Intelligence & Risk Dashboard."""
+    """Unified Executive Project Intelligence & Risk Dashboard."""
     project_title: str
     generated_at: str
     execution_time_ms: float
@@ -140,7 +140,7 @@ def _build_dashboard_payload(
     query_context: Optional[str] = None,
     document_id: Optional[str] = None
 ) -> ProjectDashboardResponse:
-    """Synthesizes dynamic dashboard payload using existing Milestones 2 and 3 agents."""
+    """Synthesizes dynamic dashboard payload using integrated multi-agent and health scoring engines."""
     start_time = time.perf_counter()
     
     # Check if we have documents

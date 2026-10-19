@@ -45,14 +45,14 @@ class TestAPIEndpoints:
 
         # 4. Query RAG endpoint
         query_payload = {
-            "query": "What is the focus of Milestone 1?",
+            "query": "What is the focus of core ingestion?",
             "top_k": 3
         }
         query_res = client.post("/api/v1/rag/query", json=query_payload)
         assert query_res.status_code == 200
         qdata = query_res.json()
         assert qdata["total_results"] > 0
-        assert "Milestone 1" in qdata["results"][0]["content"]
+        assert "document ingestion" in qdata["results"][0]["content"]
 
         # 5. Delete document
         del_res = client.delete(f"/api/v1/documents/{doc_id}")

@@ -1,5 +1,5 @@
 """
-Tests for Milestone 3 Documentation Generation Agent.
+Tests for Documentation Generation Agent.
 """
 import pytest
 from src.rag.retriever import SemanticRetriever

@@ -102,7 +102,7 @@ export async function searchRAG(query, topK = 5, docId = null, fileType = null) 
 }
 
 // ==========================================
-// Milestone 4: Dashboard & Knowledge Base APIs
+// Dashboard & Knowledge Base APIs
 // ==========================================
 
 export async function getProjectDashboard(queryContext = null, documentId = null) {
@@ -130,7 +130,7 @@ export async function getKnowledgeStats() {
 }
 
 // ==========================================
-// Milestone 2 & 3 Agent APIs
+// Multi-Agent & Documentation APIs
 // ==========================================
 
 export async function runScopeAgent(queryContext = null) {

@@ -298,7 +298,8 @@ async def get_architecture():
         "chunk_overlap": settings.CHUNK_OVERLAP,
         "distance_metric": settings.DISTANCE_METRIC,
         "supported_formats": list(settings.ALLOWED_EXTENSIONS),
-        "milestones": ["M1: Ingestion & RAG", "M2: Multi-Agent Intelligence", "M3: Health Scoring, Doc Gen & Chat", "M4: Executive Dashboard & Incremental Upload"]
+        "modules": ["Ingestion & Persistent RAG", "Multi-Agent Intelligence", "Health Scoring & Documentation Studio", "Executive Dashboard & Incremental Analytics"],
+        "milestones": ["Ingestion & Persistent RAG", "Multi-Agent Intelligence", "Health Scoring & Documentation Studio", "Executive Dashboard & Incremental Analytics"]
     }
 
 

@@ -1,5 +1,5 @@
 """
-Unit and integration tests for Risk Detection and Delivery Forecasting Agent (Milestone 2 - Requirement 2).
+Unit and integration tests for Risk Detection and Delivery Forecasting Agent.
 """
 import pytest
 from pathlib import Path

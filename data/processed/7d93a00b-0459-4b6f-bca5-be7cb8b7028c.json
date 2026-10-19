@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "document_id": "7d93a00b-0459-4b6f-bca5-be7cb8b7028c",
+    "filename": "system_specification.pdf",
+    "original_name": "system_specification.pdf",
+    "file_type": "pdf",
+    "file_size_bytes": 1000,
+    "file_hash": "e1f3afb3eb40ebd25e67d8b3bb3e465ba6204dc46b29e8b7408dcd21bb07306b",
+    "upload_timestamp": "2026-10-19T17:29:33.338507Z",
+    "page_count": 1,
+    "row_count": null,
+    "char_count": 214,
+    "word_count": 29,
+    "chunk_count": 0,
+    "status": "parsed",
+    "error_message": null,
+    "custom_metadata": {}
+  },
+  "raw_text": "AI Project Intelligence System Specification\nThis PDF document specifies the RAG retrieval pipeline and vector indexing requirements.\nCore ingestion guarantees accurate extraction for PDF, DOCX, CSV, and TXT files.",
+  "normalized_text": "AI Project Intelligence System Specification\nThis PDF document specifies the RAG retrieval pipeline and vector indexing requirements.\nCore ingestion guarantees accurate extraction for PDF, DOCX, CSV, and TXT files.",
+  "sections": [
+    {
+      "section_index": 0,
+      "section_title": "Page 1",
+      "page_number": 1,
+      "row_number": null,
+      "raw_text": "AI Project Intelligence System Specification\nThis PDF document specifies the RAG retrieval pipeline and vector indexing requirements.\nCore ingestion guarantees accurate extraction for PDF, DOCX, CSV, and TXT files.",
+      "normalized_text": "AI Project Intelligence System Specification\nThis PDF document specifies the RAG retrieval pipeline and vector indexing requirements.\nCore ingestion guarantees accurate extraction for PDF, DOCX, CSV, and TXT files."
+    }
+  ]
+}

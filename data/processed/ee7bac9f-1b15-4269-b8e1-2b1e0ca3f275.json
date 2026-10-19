@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "document_id": "ee7bac9f-1b15-4269-b8e1-2b1e0ca3f275",
+    "filename": "de1110c7-fe28-4027-aed8-7cdcd5d5f9ea_api_test_incremental_endpoint.txt",
+    "original_name": "api_test_incremental_endpoint.txt",
+    "file_type": "txt",
+    "file_size_bytes": 87,
+    "file_hash": "21ade034406ba0f1277d4e9bf69c5c80616b0991512ae843f8a0efd613b3256e",
+    "upload_timestamp": "2026-10-19T17:29:34.934343Z",
+    "page_count": null,
+    "row_count": null,
+    "char_count": 87,
+    "word_count": 11,
+    "chunk_count": 0,
+    "status": "parsed",
+    "error_message": null,
+    "custom_metadata": {
+      "encoding": "utf-8"
+    }
+  },
+  "raw_text": "Incremental upload test document unique content for executive dashboard API validation.",
+  "normalized_text": "Incremental upload test document unique content for executive dashboard API validation.",
+  "sections": [
+    {
+      "section_index": 0,
+      "section_title": "Section 1",
+      "page_number": null,
+      "row_number": null,
+      "raw_text": "Incremental upload test document unique content for executive dashboard API validation.",
+      "normalized_text": "Incremental upload test document unique content for executive dashboard API validation."
+    }
+  ]
+}

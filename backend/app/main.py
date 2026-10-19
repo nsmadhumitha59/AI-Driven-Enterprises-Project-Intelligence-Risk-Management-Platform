@@ -19,7 +19,7 @@ from app.agents.specs import get_system_architecture_info
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="Milestone 1 REST API for Document Ingestion and RAG Semantic Retrieval"
+    description="REST API for Document Ingestion and RAG Semantic Retrieval"
 )
 
 # Enable CORS for Frontend communication

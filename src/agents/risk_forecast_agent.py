@@ -1,5 +1,5 @@
 """
-Risk Detection and Delivery Forecasting Agent (Milestone 2 - Requirement 2).
+Risk Detection and Delivery Forecasting Agent.
 
 Identifies:
 - Schedule risks

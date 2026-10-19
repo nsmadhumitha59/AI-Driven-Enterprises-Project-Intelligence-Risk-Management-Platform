@@ -873,7 +873,7 @@ body {
 }
 
 /* ==========================================================================
-   Milestone 3 Styles: Subtabs, Health Scorecard, Doc Studio, Chatbot
+   Project Health, Documentation & Chatbot Styles
    ========================================================================== */
 
 /* Subtabs */
@@ -1257,7 +1257,7 @@ body {
 }
 
 /* ========================================================
-   Milestone 4: Executive Insights & Risk Dashboard Styles
+   Executive Insights & Risk Dashboard Styles
    ======================================================== */
 .m4-layout {
   display: flex;

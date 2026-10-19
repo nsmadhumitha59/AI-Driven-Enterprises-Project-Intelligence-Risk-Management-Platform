@@ -1,5 +1,5 @@
 """
-Configuration settings for AI Project Intelligence & Risk Advisor (Milestone 1).
+Configuration settings for AI-Driven Enterprise Project Intelligence & Risk Management Platform.
 """
 import os
 from pathlib import Path

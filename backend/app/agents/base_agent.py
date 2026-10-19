@@ -4,7 +4,7 @@ from typing import Dict, Any, List
 class BaseAgent(ABC):
     """
     Abstract Base Class for Multi-Agent System Architecture.
-    Designed for seamless future expansion in upcoming milestones.
+    Designed for seamless modular expansion and autonomous coordination.
     """
     def __init__(self, agent_name: str, description: str):
         self.agent_name = agent_name

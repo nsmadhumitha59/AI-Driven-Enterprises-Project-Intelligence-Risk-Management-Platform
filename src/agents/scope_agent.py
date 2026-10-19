@@ -1,5 +1,5 @@
 """
-Scope and Deliverable Extraction Agent (Milestone 2 - Requirement 1).
+Scope and Deliverable Extraction Agent.
 
 Retrieves and extracts:
 - Project goals & objectives (supporting varied phrasing without requiring exact headings)

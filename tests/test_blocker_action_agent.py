@@ -1,5 +1,5 @@
 """
-Unit and integration tests for Blocker and Action Item Identification Agent (Milestone 2 - Requirement 3).
+Unit and integration tests for Blocker and Action Item Identification Agent.
 """
 import pytest
 from pathlib import Path

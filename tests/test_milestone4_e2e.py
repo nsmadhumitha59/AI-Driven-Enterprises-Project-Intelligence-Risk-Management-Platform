@@ -1,5 +1,5 @@
 """
-End-to-End Comprehensive Test Suite for Milestone 4:
+End-to-End Comprehensive Test Suite:
 Validates the complete project intelligence workflow, all four document formats (PDF, DOCX, CSV, TXT),
 multi-agent reasoning, documentation generation, health scoring, executive dashboard synthesis,
 conversational Q&A, and incremental document upload with dynamic knowledge base re-analysis.
@@ -30,7 +30,7 @@ def client():
 
 
 class TestMilestone4EndToEndWorkflow:
-    """Validates the full Milestone 4 workflow end-to-end."""
+    """Validates the full enterprise platform workflow end-to-end."""
 
     def test_complete_workflow_across_all_four_formats(
         self,
@@ -117,7 +117,7 @@ class TestMilestone4EndToEndWorkflow:
         assert 0.0 <= health_res.timeline_risk_score <= 100.0
         assert 0.0 <= health_res.blocker_score <= 100.0
 
-        # 6. Unified Dashboard Synthesis (Milestone 4)
+        # 6. Unified Dashboard Synthesis
         dashboard = _build_dashboard_payload()
         assert dashboard.status == "success"
         assert dashboard.project_title is not None
@@ -200,7 +200,7 @@ class TestMilestone4EndToEndWorkflow:
 
 
 class TestMilestone4APIRoutes:
-    """Validates the Milestone 4 REST API endpoints."""
+    """Validates the Executive Dashboard REST API endpoints."""
 
     def test_get_dashboard_endpoint(self, client: TestClient):
         response = client.get("/api/v1/m4/dashboard")
@@ -234,7 +234,7 @@ class TestMilestone4APIRoutes:
 
     def test_incremental_upload_endpoint(self, client: TestClient, temp_test_dir: Path):
         test_file = temp_test_dir / "api_test_incremental_endpoint.txt"
-        test_file.write_text("Incremental upload test document unique content for Milestone 4 API validation.", encoding="utf-8")
+        test_file.write_text("Incremental upload test document unique content for executive dashboard API validation.", encoding="utf-8")
 
         with open(test_file, "rb") as f:
             response = client.post(

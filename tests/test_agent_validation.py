@@ -1,5 +1,5 @@
 """
-Validation test suite for Milestone 2 agents across PDF, DOCX, CSV, and TXT formats.
+Validation test suite for Multi-Agent pipeline across PDF, DOCX, CSV, and TXT formats.
 Tests varied phrasing extraction, active blocker vs action item separation, and empty states.
 """
 import pytest
@@ -9,7 +9,7 @@ from src.agents import (
     ScopeExtractionAgent,
     RiskForecastAgent,
     BlockerActionAgent,
-    Milestone2MultiAgentPipeline
+    MultiAgentPipeline
 )
 
 
@@ -44,7 +44,7 @@ class TestAgentMultiFormatValidation:
         assert len(chunks_txt) > 0
 
         # 2. Run multi-agent pipeline
-        pipeline = Milestone2MultiAgentPipeline(retriever=retriever)
+        pipeline = MultiAgentPipeline(retriever=retriever)
         analysis_report = pipeline.run_all()
 
         assert analysis_report.success is True

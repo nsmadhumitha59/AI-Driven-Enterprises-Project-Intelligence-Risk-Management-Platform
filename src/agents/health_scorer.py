@@ -1,5 +1,5 @@
 """
-Project Health Scoring Module (Milestone 3 - Requirement 2).
+Project Health Scoring Module.
 
 Evaluates overall project health and multi-dimensional operational metrics:
 - Overall Project Health Score (0–100)

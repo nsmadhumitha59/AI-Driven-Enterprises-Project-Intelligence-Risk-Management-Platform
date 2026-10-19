@@ -1,5 +1,5 @@
 """
-Integration tests for Milestone 2 agent REST API endpoints.
+Integration tests for Multi-Agent REST API endpoints.
 """
 import pytest
 from fastapi.testclient import TestClient
@@ -44,7 +44,7 @@ class TestAgentAPIEndpoints:
         assert "action_items" in data
 
     def test_analyze_all_endpoint(self, client):
-        response = client.post("/api/v1/agents/analyze-all", json={"query_context": "milestone status"})
+        response = client.post("/api/v1/agents/analyze-all", json={"query_context": "project delivery status"})
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True

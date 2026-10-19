@@ -1,5 +1,5 @@
 """
-Unit and integration tests for Scope and Deliverable Extraction Agent (Milestone 2 - Requirement 1).
+Unit and integration tests for Scope and Deliverable Extraction Agent.
 """
 import pytest
 from src.ingestion.parsers import DOCXParser, PDFParser, CSVParser, TXTParser

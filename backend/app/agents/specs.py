@@ -5,7 +5,7 @@ from app.config import settings
 MULTI_AGENT_SPECS: List[AgentSpec] = [
     AgentSpec(
         name="Document Ingestion & RAG Agent",
-        milestone="Milestone 1 (Implemented)",
+        milestone="Core Engine",
         status="Active",
         responsibilities=[
             "Extract raw content from PDF, DOCX, CSV, and TXT files",
@@ -21,8 +21,8 @@ MULTI_AGENT_SPECS: List[AgentSpec] = [
     ),
     AgentSpec(
         name="Risk Advisor Agent",
-        milestone="Milestone 2 (Future Scope)",
-        status="Planned",
+        milestone="Intelligence Layer",
+        status="Active",
         responsibilities=[
             "Analyze retrieved project document chunks for technical, operational, and financial risks",
             "Assign severity scores (High, Medium, Low) based on risk impact",
@@ -33,19 +33,19 @@ MULTI_AGENT_SPECS: List[AgentSpec] = [
     ),
     AgentSpec(
         name="Delivery Forecast Agent",
-        milestone="Milestone 3 (Future Scope)",
-        status="Planned",
+        milestone="Intelligence Layer",
+        status="Active",
         responsibilities=[
             "Analyze sprint CSV data, velocity metrics, and requirement timelines",
             "Forecast completion dates and identify sprint bottlenecks"
         ],
-        inputs=["CSV Sprint Data", "Project Milestone Requirements"],
+        inputs=["CSV Sprint Data", "Project Target Requirements"],
         outputs=["Estimated Delivery Dates", "Velocity Variance Analysis"]
     ),
     AgentSpec(
         name="Blocker & Action Item Agent",
-        milestone="Milestone 4 (Future Scope)",
-        status="Planned",
+        milestone="Intelligence Layer",
+        status="Active",
         responsibilities=[
             "Identify active impediments and unresolved blockers from meeting notes & DOCX specs",
             "Extract action items with assigned owners and target resolution dates"
@@ -55,8 +55,8 @@ MULTI_AGENT_SPECS: List[AgentSpec] = [
     ),
     AgentSpec(
         name="Conversational Intelligence Assistant Agent",
-        milestone="Milestone 5 (Future Scope)",
-        status="Planned",
+        milestone="Assistant Layer",
+        status="Active",
         responsibilities=[
             "Synthesize RAG retrieval results and multi-agent outputs into natural conversational answers",
             "Provide interactive Q&A over indexed project knowledge base"

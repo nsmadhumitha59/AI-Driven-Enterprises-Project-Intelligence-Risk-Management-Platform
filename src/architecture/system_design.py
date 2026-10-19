@@ -1,11 +1,11 @@
 """
-System Architecture & Agent Blueprint Definitions for AI Project Intelligence & Risk Advisor.
+System Architecture & Agent Blueprint Definitions for AI-Driven Enterprise Project Intelligence & Risk Management Platform.
 
 This module provides formal definitions and blueprints for:
 1. Overall System Architecture
 2. End-to-End RAG Pipeline Flow
 3. Multi-Agent System Structure and Responsibilities
-4. Future Milestone Extensibility Interfaces
+4. Extensibility Interfaces
 """
 from dataclasses import dataclass, field
 from enum import Enum
@@ -44,19 +44,20 @@ class AgentMetadata:
     role: AgentRole
     name: str
     description: str
-    milestone: int
-    inputs: List[str]
-    outputs: List[str]
+    category: str = "core"
+    milestone: int = 1
+    inputs: List[str] = field(default_factory=list)
+    outputs: List[str] = field(default_factory=list)
     dependencies: List[AgentRole] = field(default_factory=list)
 
 
-# Formal registry of all system agents across milestones
+# Formal registry of all system agents across platform subsystems
 SYSTEM_AGENT_REGISTRY: Dict[AgentRole, AgentMetadata] = {
     AgentRole.INGESTION_AGENT: AgentMetadata(
         role=AgentRole.INGESTION_AGENT,
         name="Document Ingestion & Context Indexer",
         description="Extracts, normalizes, chunks, embeds, and indexes project artifacts (PDF, DOCX, CSV, TXT) into vector storage.",
-        milestone=1,
+        category="ingestion",
         inputs=["Raw project artifacts, meeting notes, sprint sheets, PRDs, task exports"],
         outputs=["Normalized text chunks", "Document metadata", "Vector embeddings in ChromaDB"],
         dependencies=[]
@@ -65,7 +66,7 @@ SYSTEM_AGENT_REGISTRY: Dict[AgentRole, AgentMetadata] = {
         role=AgentRole.ORCHESTRATOR,
         name="Master Project Supervisor & Workflow Router",
         description="Coordinates multi-agent execution graphs, routes queries, aggregates insights, and synthesizes overall reports.",
-        milestone=2,
+        category="orchestration",
         inputs=["User query / triggered schedule", "RAG retrieval contexts"],
         outputs=["Multi-agent execution plan", "Consolidated project intelligence report"],
         dependencies=[AgentRole.INGESTION_AGENT]
@@ -74,7 +75,7 @@ SYSTEM_AGENT_REGISTRY: Dict[AgentRole, AgentMetadata] = {
         role=AgentRole.RISK_DETECTION_AGENT,
         name="Risk Identification & Impact Analyzer",
         description="Analyzes project chunks and status reports to detect timeline, technical, resource, and scope risks with severity scoring.",
-        milestone=2,
+        category="risk",
         inputs=["RAG retrieved contexts", "Historical project patterns"],
         outputs=["Structured risk log", "Severity/probability matrix", "Mitigation suggestions"],
         dependencies=[AgentRole.INGESTION_AGENT]
@@ -82,8 +83,8 @@ SYSTEM_AGENT_REGISTRY: Dict[AgentRole, AgentMetadata] = {
     AgentRole.DELIVERY_FORECAST_AGENT: AgentMetadata(
         role=AgentRole.DELIVERY_FORECAST_AGENT,
         name="Delivery Forecasting & Velocity Advisor",
-        description="Evaluates sprint velocity, ticket completion rates, and milestones to forecast delivery dates and slippage probability.",
-        milestone=2,
+        description="Evaluates sprint velocity, ticket completion rates, and project targets to forecast delivery dates and slippage probability.",
+        category="forecast",
         inputs=["Task CSV data", "Sprint summaries", "PRD timelines"],
         outputs=["Completion date forecast", "Confidence interval", "Velocity trends"],
         dependencies=[AgentRole.INGESTION_AGENT]
@@ -92,7 +93,7 @@ SYSTEM_AGENT_REGISTRY: Dict[AgentRole, AgentMetadata] = {
         role=AgentRole.BLOCKER_ACTION_AGENT,
         name="Blocker Resolution & Action Item Extractor",
         description="Parses meeting notes, issue discussions, and sprint logs to identify active blockers, owners, and concrete next actions.",
-        milestone=2,
+        category="blockers",
         inputs=["Meeting notes (DOCX/TXT)", "Daily standup logs"],
         outputs=["Action item list", "Assigned owners", "Blocker escalation list"],
         dependencies=[AgentRole.INGESTION_AGENT]
@@ -101,7 +102,7 @@ SYSTEM_AGENT_REGISTRY: Dict[AgentRole, AgentMetadata] = {
         role=AgentRole.PROJECT_HEALTH_AGENT,
         name="Project Health & Scorecard Evaluator",
         description="Computes composite project health scores across schedule, quality, risk, and team bandwidth dimensions.",
-        milestone=3,
+        category="health",
         inputs=["Risk outputs", "Delivery forecast", "Blocker statuses"],
         outputs=["Overall health index (0-100)", "Dimension breakdown", "Executive summary"],
         dependencies=[AgentRole.RISK_DETECTION_AGENT, AgentRole.DELIVERY_FORECAST_AGENT]
@@ -110,7 +111,7 @@ SYSTEM_AGENT_REGISTRY: Dict[AgentRole, AgentMetadata] = {
         role=AgentRole.DOCS_GENERATION_AGENT,
         name="Automated Documentation & Report Generator",
         description="Generates executive briefing memos, weekly stakeholder status reports, and technical summaries from retrieved intelligence.",
-        milestone=3,
+        category="documentation",
         inputs=["Synthesized agent outputs", "Document knowledge base"],
         outputs=["Markdown/PDF executive report", "Release notes", "Sprint retrospectives"],
         dependencies=[AgentRole.ORCHESTRATOR]
@@ -119,7 +120,7 @@ SYSTEM_AGENT_REGISTRY: Dict[AgentRole, AgentMetadata] = {
         role=AgentRole.CONVERSATIONAL_ADVISOR,
         name="Conversational Project Intelligence Assistant",
         description="Interactive Q&A assistant answering questions about project timelines, technical decisions, blockers, and recommendations with citations.",
-        milestone=3,
+        category="assistant",
         inputs=["User natural language prompt", "RAG semantic search results"],
         outputs=["Streaming contextual answers", "Document citations", "Follow-up recommendations"],
         dependencies=[AgentRole.INGESTION_AGENT]
@@ -128,7 +129,7 @@ SYSTEM_AGENT_REGISTRY: Dict[AgentRole, AgentMetadata] = {
 
 
 # =====================================================================
-# 2. Shared State Contracts & RAG Context Structures
+# 2. Extensible RAG Flow Specification Data Structures
 # =====================================================================
 
 class DocumentType(str, Enum):
@@ -144,17 +145,18 @@ class ChunkMetadata(BaseModel):
     filename: str
     file_type: DocumentType
     chunk_index: int
-    start_char: int
-    end_char: int
+    start_char: int = 0
+    end_char: int = 0
     page_number: Optional[int] = None
     row_number: Optional[int] = None
     section_title: Optional[str] = None
-    timestamp: str
-    token_estimate: int
+    timestamp: str = ""
+    token_estimate: int = 0
+    char_count: Optional[int] = None
 
 
 class RetrievedChunk(BaseModel):
-    """Standardized retrieval object returned by the RAG pipeline."""
+    """A semantic chunk returned from vector retrieval."""
     chunk_id: str
     content: str
     metadata: ChunkMetadata
@@ -164,7 +166,7 @@ class RetrievedChunk(BaseModel):
 class MultiAgentProjectState(BaseModel):
     """
     Unified state schema that flows across agents in the multi-agent graph.
-    Milestone 1 establishes the baseline retrieval_context.
+    Establishes the baseline retrieval_context.
     """
     project_id: str = "default_project"
     session_id: str
@@ -177,9 +179,9 @@ class MultiAgentProjectState(BaseModel):
 def get_architecture_overview() -> Dict[str, Any]:
     """Returns a structured dictionary of the overall system architecture."""
     return {
-        "system_name": "AI Project Intelligence & Risk Advisor",
-        "current_milestone": 1,
-        "milestone_1_components": {
+        "system_name": "AI-Driven Enterprise Project Intelligence & Risk Management Platform",
+        "platform_version": "1.0.0",
+        "core_components": {
             "document_ingestion": [
                 "PDF Parser (pypdf text & layout extractor)",
                 "DOCX Parser (python-docx paragraph & table extractor)",

@@ -1,5 +1,5 @@
 """
-Base Agent classes, data contracts, and grounding validation utilities for Milestone 2.
+Base Agent classes, data contracts, and grounding validation utilities.
 """
 from abc import ABC, abstractmethod
 from enum import Enum
@@ -32,7 +32,7 @@ class SourceReference(BaseModel):
 
 
 class BaseAgentResult(BaseModel):
-    """Base response schema for all milestone agents."""
+    """Base response schema for all intelligence agents."""
     agent_name: str
     agent_role: str
     execution_status: AgentExecutionStatus = AgentExecutionStatus.SUCCESS

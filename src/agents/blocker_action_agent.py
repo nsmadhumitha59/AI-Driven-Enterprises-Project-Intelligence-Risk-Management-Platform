@@ -1,5 +1,5 @@
 """
-Blocker and Action Item Identification Agent (Milestone 2 - Requirement 3).
+Blocker and Action Item Identification Agent.
 
 Analyzes meeting notes, progress updates, sprint tasks, and project documents via RAG.
 Extracts:

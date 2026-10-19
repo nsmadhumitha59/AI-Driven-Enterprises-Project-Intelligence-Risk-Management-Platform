@@ -1,5 +1,5 @@
 """
-FastAPI REST Routes for Milestone 3 (Documentation Generation, Health Scoring, Conversational Assistant).
+FastAPI REST Routes for Project Intelligence, Documentation Generation, Health Scoring & Conversational Assistant.
 """
 import logging
 from typing import Optional, List, Dict, Any

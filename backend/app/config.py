@@ -14,7 +14,7 @@ CHROMA_DB_DIR.mkdir(parents=True, exist_ok=True)
 
 class Settings(BaseModel):
     PROJECT_NAME: str = "AI Project Intelligence & Risk Advisor"
-    VERSION: str = "1.0.0 (Milestone 1)"
+    VERSION: str = "1.0.0"
     
     # RAG Settings
     EMBEDDING_MODEL_NAME: str = "all-MiniLM-L6-v2"

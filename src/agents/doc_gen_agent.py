@@ -1,5 +1,5 @@
 """
-Documentation Generation Agent (Milestone 3 - Requirement 1).
+Documentation Generation Agent.
 
 Generates structured, grounded project documentation:
 1. User Stories (Agile format: As a [role], I want [feature], So that [benefit] with Acceptance Criteria)

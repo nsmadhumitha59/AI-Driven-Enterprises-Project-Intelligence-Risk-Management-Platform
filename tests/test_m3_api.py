@@ -1,5 +1,5 @@
 """
-Tests for Milestone 3 API Endpoints.
+Tests for Project Intelligence & Documentation API Endpoints.
 """
 import pytest
 from fastapi.testclient import TestClient

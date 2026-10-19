@@ -1,5 +1,5 @@
 """
-Conversational Project Intelligence Assistant (Milestone 3 - Requirement 3).
+Conversational Project Intelligence Assistant.
 
 RAG-powered interactive conversational assistant providing grounded answers to project queries:
 - "Are we on track?"

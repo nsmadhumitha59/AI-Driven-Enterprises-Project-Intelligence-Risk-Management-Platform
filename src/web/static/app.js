@@ -1,34 +1,34 @@
 /**
- * Frontend logic for AI Project Intelligence & Risk Advisor (Milestones 1, 2, and 3)
+ * Frontend logic for AI-Driven Enterprise Project Intelligence & Risk Management Platform
  */
 
 document.addEventListener("DOMContentLoaded", () => {
   // Navigation Tabs
-  const tabMilestone4 = document.getElementById("tabMilestone4");
+  const tabDashboard = document.getElementById("tabDashboard") || document.getElementById("tabMilestone4");
   const tabIngestion = document.getElementById("tabIngestion");
   const tabAgents = document.getElementById("tabAgents");
-  const tabMilestone3 = document.getElementById("tabMilestone3");
-  const sectionMilestone4 = document.getElementById("sectionMilestone4");
+  const tabStudio = document.getElementById("tabStudio") || document.getElementById("tabMilestone3");
+  const sectionDashboard = document.getElementById("sectionDashboard") || document.getElementById("sectionMilestone4");
   const sectionIngestion = document.getElementById("sectionIngestion");
   const sectionAgents = document.getElementById("sectionAgents");
-  const sectionMilestone3 = document.getElementById("sectionMilestone3");
+  const sectionStudio = document.getElementById("sectionStudio") || document.getElementById("sectionMilestone3");
 
   function switchTab(activeTab, activeSection) {
-    [tabMilestone4, tabIngestion, tabAgents, tabMilestone3].forEach(t => t && t.classList.remove("active"));
-    [sectionMilestone4, sectionIngestion, sectionAgents, sectionMilestone3].forEach(s => s && s.classList.remove("active"));
+    [tabDashboard, tabIngestion, tabAgents, tabStudio].forEach(t => t && t.classList.remove("active"));
+    [sectionDashboard, sectionIngestion, sectionAgents, sectionStudio].forEach(s => s && s.classList.remove("active"));
     if (activeTab) activeTab.classList.add("active");
     if (activeSection) activeSection.classList.add("active");
-    if (activeTab === tabMilestone4) {
-      loadM4Dashboard();
+    if (activeTab === tabDashboard) {
+      loadDashboard();
     }
   }
 
-  if (tabMilestone4) tabMilestone4.addEventListener("click", () => switchTab(tabMilestone4, sectionMilestone4));
+  if (tabDashboard) tabDashboard.addEventListener("click", () => switchTab(tabDashboard, sectionDashboard));
   if (tabIngestion) tabIngestion.addEventListener("click", () => switchTab(tabIngestion, sectionIngestion));
   if (tabAgents) tabAgents.addEventListener("click", () => switchTab(tabAgents, sectionAgents));
-  if (tabMilestone3) tabMilestone3.addEventListener("click", () => switchTab(tabMilestone3, sectionMilestone3));
+  if (tabStudio) tabStudio.addEventListener("click", () => switchTab(tabStudio, sectionStudio));
 
-  // Milestone 1 Elements
+  // Ingestion & Storage Elements
   const systemStatus = document.getElementById("systemStatus");
   const statusText = document.getElementById("statusText");
   const metricDocsCount = document.getElementById("metricDocsCount");
@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalDocBody = document.getElementById("modalDocBody");
   const btnModalClose = document.getElementById("btnModalClose");
 
-  // Milestone 2 Elements
+  // Multi-Agent Elements
   const btnRunScopeAgent = document.getElementById("btnRunScopeAgent");
   const btnRunRiskAgent = document.getElementById("btnRunRiskAgent");
   const btnRunBlockerAgent = document.getElementById("btnRunBlockerAgent");
@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const agentExecTime = document.getElementById("agentExecTime");
   const agentOutputContainer = document.getElementById("agentOutputContainer");
 
-  // Milestone 3 Elements
+  // Health Scoring & Documentation Studio Elements
   const btnSubtabHealth = document.getElementById("btnSubtabHealth");
   const btnSubtabDocs = document.getElementById("btnSubtabDocs");
   const btnSubtabChat = document.getElementById("btnSubtabChat");
@@ -161,7 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
     await executeSearch(query);
   });
 
-  // Milestone 2 Agent Event Handlers
+  // Multi-Agent Event Handlers
   btnRunScopeAgent.addEventListener("click", () => executeAgent("scope"));
   btnRunRiskAgent.addEventListener("click", () => executeAgent("risk-forecast"));
   btnRunBlockerAgent.addEventListener("click", () => executeAgent("blockers-actions"));
@@ -405,7 +405,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /**
-   * Milestone 2 Agent Execution
+   * Multi-Agent Execution
    */
   async function executeAgent(endpoint) {
     const focusVal = agentFocusInput.value.trim() || null;
@@ -718,7 +718,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================================================================
-  // Milestone 3: Health Scoring Event Handlers & Rendering
+  // Health Scoring Event Handlers & Rendering
   // =========================================================================
   if (btnCalculateHealth) {
     btnCalculateHealth.addEventListener("click", async () => {
@@ -819,7 +819,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================================================================
-  // Milestone 3: Documentation Generation Event Handlers & Rendering
+  // Documentation Generation Event Handlers & Rendering
   // =========================================================================
   if (btnGenStories) btnGenStories.addEventListener("click", () => executeDocGen("user-stories", "User Stories"));
   if (btnGenRisks) btnGenRisks.addEventListener("click", () => executeDocGen("risk-register", "Risk Register"));
@@ -1067,7 +1067,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================================================================
-  // Milestone 3: Conversational Intelligence Assistant Event Handlers
+  // Conversational Intelligence Assistant Event Handlers
   // =========================================================================
   let conversationId = `CONV-${Date.now().toString(36).toUpperCase()}`;
 
@@ -1199,7 +1199,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =====================================================================
-  // Milestone 4: Executive Insights & Risk Dashboard Implementation
+  // Executive Insights & Risk Dashboard Implementation
   // =====================================================================
 
   let currentDashboardData = null;
@@ -1229,7 +1229,7 @@ document.addEventListener("DOMContentLoaded", () => {
       currentDashboardData = data;
       renderM4Dashboard(data, focusQuery);
     } catch (err) {
-      console.error("Failed to load Milestone 4 Dashboard:", err);
+      console.error("Failed to load Executive Dashboard:", err);
       container.innerHTML = `
         <div class="card-panel banner-error" style="padding: 24px;">
           <h3>⚠️ Unable to Load Dashboard</h3>
@@ -1760,8 +1760,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Auto load Milestone 4 Dashboard on startup
-  loadM4Dashboard();
+  // Auto load Executive Dashboard on startup
+  const loadDashboard = loadM4Dashboard;
+  loadDashboard();
 
   function escapeHtml(str) {
     if (!str) return "";

@@ -1,5 +1,5 @@
 """
-Tests for Milestone 3 Project Health Scoring Module.
+Tests for Project Health Scoring Module.
 """
 import pytest
 from src.rag.retriever import SemanticRetriever

@@ -1,5 +1,5 @@
 """
-Tests for Milestone 3 Conversational Project Intelligence Assistant.
+Tests for Conversational Project Intelligence Assistant.
 """
 import pytest
 from src.rag.retriever import SemanticRetriever

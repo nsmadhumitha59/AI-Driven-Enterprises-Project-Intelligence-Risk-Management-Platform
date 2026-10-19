@@ -55,7 +55,7 @@ class TestDOCXParser:
 
         assert parsed.metadata.file_type == FileType.DOCX
         assert "Project Charter & Scope" in parsed.normalized_text
-        assert "Milestone 1 Ingestion" in parsed.normalized_text
+        assert "Core Ingestion Engine" in parsed.normalized_text
         assert parsed.metadata.char_count > 100
         assert len(parsed.sections) >= 3
         assert parsed.metadata.status == "parsed"

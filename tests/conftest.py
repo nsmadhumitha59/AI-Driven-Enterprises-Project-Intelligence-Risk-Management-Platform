@@ -57,7 +57,7 @@ def sample_txt_file(temp_test_dir) -> Path:
         "AI Project Intelligence Architecture Overview\n\n"
         "The system uses a multi-agent structure to provide automated risk detection, "
         "delivery forecasting, and blocker analysis for software engineering initiatives.\n\n"
-        "Milestone 1 focuses on document ingestion, content normalization, sentence-transformers "
+        "Core ingestion focuses on document ingestion, content normalization, sentence-transformers "
         "embedding generation, and ChromaDB vector indexing."
     )
     file_path.write_text(content, encoding="utf-8")
@@ -111,7 +111,7 @@ def sample_docx_file(temp_test_dir) -> Path:
     hdr_cells[2].text = "Status"
 
     row_cells = table.add_row().cells
-    row_cells[0].text = "Milestone 1 Ingestion"
+    row_cells[0].text = "Core Ingestion Engine"
     row_cells[1].text = "2026-Q4"
     row_cells[2].text = "Active"
 
@@ -141,7 +141,7 @@ def sample_pdf_file(temp_test_dir) -> Path:
         b"0 -20 Td\n"
         b"(This PDF document specifies the RAG retrieval pipeline and vector indexing requirements.) Tj\n"
         b"0 -20 Td\n"
-        b"(Milestone 1 guarantees accurate extraction for PDF, DOCX, CSV, and TXT files.) Tj\n"
+        b"(Core ingestion guarantees accurate extraction for PDF, DOCX, CSV, and TXT files.) Tj\n"
         b"ET\n"
     )
     stream_obj = DecodedStreamObject()
