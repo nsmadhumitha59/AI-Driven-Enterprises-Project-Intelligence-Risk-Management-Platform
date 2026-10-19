@@ -25,7 +25,7 @@ from src.agents.chat_assistant import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/m3", tags=["Milestone 3 - Project Intelligence & Docs"])
+router = APIRouter(prefix="/api/v1/m3", tags=["Project Health & Documentation"])
 
 # Lazy-loaded singletons
 _doc_agent: Optional[DocumentationGenerationAgent] = None

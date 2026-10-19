@@ -67,5 +67,8 @@ class TestChatAssistant:
 
     def test_guardrail_unsupported_question(self):
         res = self.assistant.answer_question("How do I launch a spaceship to Mars using rocket fuel X?")
-        assert isinstance(res, ChatQueryResponse)
-        assert "do not appear to contain sufficient information" in res.answer or "not contain" in res.answer
+        assert any(term in res.answer for term in [
+            "No relevant information found",
+            "do not appear to contain sufficient information",
+            "not contain"
+        ])

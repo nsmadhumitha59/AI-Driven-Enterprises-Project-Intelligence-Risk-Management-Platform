@@ -1,74 +1,77 @@
-# AI Project Intelligence & Risk Advisor (Milestones 1, 2, 3 & 4)
+# AI-Driven Enterprise Project Intelligence & Risk Management Platform
 
-> **Complete Platform Deliverables**: Document Ingestion (PDF, DOCX, CSV, TXT), Persistent RAG Subsystem (ChromaDB + SentenceTransformers), Specialized Multi-Agent Intelligence (Scope, Risk Forecasting, Blocker & Action Items), Grounded Documentation Generation (Agile User Stories, Enterprise Risk Register, Action Item Checklist), Multi-Dimensional Project Health Scoring, Conversational Project Intelligence Assistant, and the **Milestone 4 Executive Project Insights & Risk Summary Dashboard with Incremental Document Upload & Dynamic Knowledge Base Re-Analysis**.
+> An enterprise-grade, agentic AI platform designed to continuously analyze project artifacts (PRDs, sprint backlogs, architecture decision records, standup logs, and meeting minutes) across multiple document formats. The platform autonomously detects risks, forecasts delivery timelines, identifies blockers and action items, calculates multi-dimensional health scores, generates grounded documentation, and renders live executive insights on an interactive dashboard.
 
 ---
 
 ## 🌟 Platform Capabilities Overview
 
-### Milestone 1: Core Ingestion & RAG Subsystem
-- **Multi-Format Ingestion**: PDF (`pypdf`), DOCX (`python-docx`), CSV (`pandas`), and TXT / Markdown.
-- **Content Normalizer**: Unicode NFKC normalization, whitespace sanitization, and structural boundary preservation ([`src/ingestion/normalizer.py`](file:///src/ingestion/normalizer.py)).
-- **Chunking & Vector Indexing**: Recursive boundary-aware text splitter, SentenceTransformers (`all-MiniLM-L6-v2`, 384-dim dense embeddings), and persistent ChromaDB vector storage ([`src/rag/`](file:///src/rag/)).
-- **Semantic Retrieval**: Cosine similarity search with score thresholding, top-k ranking, and metadata filtering ([`src/rag/retriever.py`](file:///src/rag/retriever.py)).
+### 1. Multi-Format Document Ingestion & Persistent Vector RAG Subsystem
+- **Multi-Format Parsing Engine**: Native extraction across PDF (`pypdf`), DOCX (`python-docx`), CSV (`pandas`), and TXT / Markdown files with multi-encoding detection (UTF-8, Latin-1, CP1252).
+- **Content Normalizer**: Unicode NFKC normalization, whitespace sanitization, hyphenated line-wrap restoration, and structural section boundary preservation ([`src/ingestion/normalizer.py`](file:///src/ingestion/normalizer.py)).
+- **Chunking & Dense Vector Indexing**: Recursive boundary-aware text splitter (paragraph, sentence, clause boundaries with sliding-window overlap), SentenceTransformers (`all-MiniLM-L6-v2`, 384-dimensional dense semantic vectors with L2 normalization), and persistent ChromaDB vector storage ([`src/rag/`](file:///src/rag/)).
+- **Semantic Retrieval**: Cosine similarity retrieval with confidence thresholding, top-k ranking, and rich metadata filtering (`document_id`, `file_type`, `chunk_index`, provenance snippet).
 
-### Milestone 2: Specialized Intelligence Agents
+### 2. Autonomous Multi-Agent Intelligence Network
 1. **Scope & Deliverables Extraction Agent** ([`src/agents/scope_agent.py`](file:///src/agents/scope_agent.py)):
-   - Extracts: Project goals with priority, Scope boundaries (in-scope, out-of-scope, constraints), Deliverables, Milestones, and Responsibility assignments.
+   - Identifies project objectives and prioritization levels.
+   - Extracts explicit scope boundaries (in-scope vs. out-of-scope boundaries and technical constraints).
+   - Extracts deliverables, target milestones, and team responsibility assignments.
 2. **Risk Detection & Delivery Forecasting Agent** ([`src/agents/risk_forecast_agent.py`](file:///src/agents/risk_forecast_agent.py)):
-   - Identifies: Schedule risks, dependency bottlenecks, missing specifications, delivery challenges, and deadline risks.
-   - Categorization & Severity: `Critical`, `High`, `Medium`, `Low` with supporting rationale and actionable mitigations.
-   - Delivery Forecast: Overall status (`On Track`, `At Risk`, `Delayed`), slippage probability percentage, and forecast factors.
-3. **Blocker & Action Item Identification Agent** ([`src/agents/blocker_action_agent.py`](file:///src/agents/blocker_action_agent.py)):
-   - Extracts: Active blockers, pending decisions, unresolved issues, and action items with assignees and due dates.
-4. **Milestone 2 Multi-Agent Orchestrator** ([`src/agents/orchestrator.py`](file:///src/agents/orchestrator.py)):
-   - Combines and synthesizes all 3 agents into a unified project intelligence report with executive summary.
+   - Identifies technical bottlenecks, schedule risks, dependency vulnerabilities, missing specifications, and staffing gaps.
+   - Categorization & Severity Matrix: `Critical`, `High`, `Medium`, and `Low` with technical rationale and actionable mitigations.
+   - Delivery Forecasting: Predicts overall delivery trajectory (`On Track`, `At Risk`, `Delayed`), delivery slippage probability percentage, and primary contributing factors.
+3. **Blocker & Action Item Resolution Agent** ([`src/agents/blocker_action_agent.py`](file:///src/agents/blocker_action_agent.py)):
+   - Extracts active blockers, pending technical decisions, unresolved architecture hurdles, and action items with assignees and due dates.
+4. **Multi-Agent Orchestrator** ([`src/agents/orchestrator.py`](file:///src/agents/orchestrator.py)):
+   - Coordinates multi-agent parallel execution and synthesizes individual agent findings into a cohesive project intelligence report.
 
-### Milestone 3: Health Scoring, Documentation Generation & Conversational Assistant
-1. **Documentation Generation Studio** ([`src/agents/doc_gen_agent.py`](file:///src/agents/doc_gen_agent.py)):
-   - Generates Agile User Stories (`As a... I want... So that...` with acceptance criteria).
-   - Generates Enterprise Risk Registers (Impact, Likelihood, Severity, Mitigation, Contingency).
-   - Generates Action Items Checklists (Assignee, Target Date, Status, Provenance).
-   - Exports complete documentation in clean Markdown and structured JSON.
-2. **Multi-Dimensional Project Health Scoring** ([`src/agents/health_scorer.py`](file:///src/agents/health_scorer.py)):
-   - Overall Project Health Score (0–100) and Health Status (`Healthy`, `At Risk`, `Critical`).
-   - Dimension 1: Scope Clarity (0–100).
-   - Dimension 2: Timeline Risk (0–100).
-   - Dimension 3: Blocker Count & Issue Severity (0–100).
-   - Actionable, prioritized health recommendations with target owners.
-3. **Conversational Project Intelligence Assistant** ([`src/agents/chat_assistant.py`](file:///src/agents/chat_assistant.py)):
-   - Natural language conversational queries (`Are we on track?`, `What are our biggest risks?`, `What are current blockers?`).
-   - Direct provenance tracking with similarity scores, chunk snippets, and document references.
+### 3. Multi-Dimensional Project Health Scoring & Diagnostics
+- **Comprehensive Health Score (0–100)**: Transparent weighted scoring engine providing an instant status badge (`Healthy`, `At Risk`, `Critical`) ([`src/agents/health_scorer.py`](file:///src/agents/health_scorer.py)).
+- **Diagnostic Dimensions**:
+  - **Scope Clarity Score (0–100)**: Evaluates clarity of requirements, goal completeness, and constraint definition.
+  - **Timeline Risk Score (0–100)**: Evaluates schedule slippage risk, deadline tightness, and velocity.
+  - **Blocker Severity Score (0–100)**: Evaluates active blocker volume and unresolved dependencies.
+- **Actionable Strategic Recommendations**: Automatically produces prioritized mitigation tasks with designated owners.
 
-### Milestone 4: Executive Insights & Risk Summary Dashboard & Incremental Upload
-1. **Project Insights & Risk Summary Dashboard** ([`src/api/m4_routes.py`](file:///src/api/m4_routes.py), [`frontend/src/components/ProjectDashboard.jsx`](file:///frontend/src/components/ProjectDashboard.jsx)):
-   - **Overall Project Health Score**: Circular score meter with diagnostic status pill and progress bars for Scope Clarity, Timeline Risk, and Blocker Severity.
-   - **Scope Summary**: Goals with priority, Scope boundaries (In-Scope vs. Out-of-Scope), Deliverables table with owners, and Milestones.
-   - **Extracted Risks Register**: Interactive severity filtering (`ALL`, `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`), risk rationale, mitigation strategies, and source provenance.
-   - **Active Blockers**: Prominent high-severity blocker cards with impact analysis and source document references.
-   - **Action Items Checklist**: Checklist with assignees, due dates, priority tags, and status.
-   - **Timeline Risk & Delivery Forecast**: Slippage probability percentage, delivery status, and key forecast factors.
-   - **Key Recommendations**: Prioritized actionable recommendations targeting executive owners.
-   - **Live Synthesis**: Recomputes all widgets dynamically across the RAG knowledge base.
-2. **Incremental Document Upload & Dynamic Re-Analysis**:
-   - Allows users to upload additional PDF, DOCX, CSV, and TXT files after initial ingestion.
-   - Extracts → Chunks → Embeds → Appends to the existing ChromaDB vector index without deleting prior data.
-   - Displays real-time document count and indexed chunk count.
-   - Live "Rerun Analysis" button recomputes the entire dashboard dynamically with the updated knowledge base.
+### 4. Grounded Agile Documentation Generation Studio
+- **Agile User Stories**: Generates structured stories in `As a... I want... So that...` syntax complete with Gherkin-style Acceptance Criteria ([`src/agents/doc_gen_agent.py`](file:///src/agents/doc_gen_agent.py)).
+- **Enterprise Risk Register**: Comprehensive risk matrices including category, impact, likelihood, overall severity, mitigation strategy, and contingency ownership.
+- **Action Items Checklist**: Actionable tasks mapped to specific assignees, target deadlines, priority flags, and source provenance.
+- **Export Formats**: Supports clean, presentation-ready Markdown and structured JSON exports.
+
+### 5. Conversational Project Intelligence Assistant (RAG Chatbot)
+- **Natural Language Inquiry**: Inquire about project status in plain English (`Are we on track?`, `What are our highest risks?`, `Who is assigned to authentication?`) ([`src/agents/chat_assistant.py`](file:///src/agents/chat_assistant.py)).
+- **Strict Evidence Provenance**: Answers are strictly grounded in retrieved chunks with citations, similarity scores, and document source previews.
+- **Smart Follow-ups**: Provides context-aware proactive follow-up suggestions for deeper exploration.
+
+### 6. Executive Project Insights & Risk Summary Dashboard
+- **Interactive Health Gauge**: Circular animated health score meter with dynamic status pill and diagnostic sub-score progress bars.
+- **Scope Breakdown**: Clear visual layout of goals, in-scope vs out-of-scope boundaries, deliverables table, and key milestones.
+- **Risk Severity Filter**: Interactive filtering (`ALL`, `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`) with detailed technical mitigations.
+- **High-Priority Blocker Cards**: Prominent alerts highlighting critical blockers requiring immediate attention.
+- **Action Items Checklist**: Live checklist with assignees, target dates, and priority indicators.
+- **Timeline & Slippage Forecast**: Statistical forecast displaying slippage probability percentage and core forecast factors.
+- **Executive Recommendations**: Prioritized actionable guidance targeted at project leadership.
+
+### 7. Incremental Document Upload & Dynamic Knowledge Base Re-Analysis
+- **Zero-Loss Incremental Uploads**: Upload new PDF, DOCX, CSV, or TXT project documents at any time. The system processes, splits, embeds, and appends new vectors to the existing ChromaDB collection without overwriting historical data.
+- **Live Knowledge Statistics**: Real-time tracking of active document count and total indexed chunk count.
+- **Dynamic Re-Analysis**: Re-runs all intelligence agents across the updated corpus with one click.
 
 ---
 
 ## 🚀 Quickstart Guide
 
-### 1. Launching the Backend API & Web Server
+### 1. Launching the Backend API & Integrated Web Portal
 
 ```bash
 python run.py serve --port 8000
 ```
 
 - **Interactive Web Portal**: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
-- **Swagger API Interactive Docs**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- **ReDoc Specification**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+- **Swagger Interactive API Documentation**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- **ReDoc API Specification**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
 ### 2. Launching the React Frontend Application (Optional)
 
@@ -78,106 +81,112 @@ npm install
 npm run dev
 ```
 
-- **React Dashboard UI**: [http://localhost:3000/](http://localhost:3000/)
+- **React Executive Dashboard UI**: [http://localhost:3000/](http://localhost:3000/)
 
 ---
 
 ## 🛠️ Command-Line Interface (CLI)
 
+The platform provides a comprehensive CLI for ingestion, analysis, and dashboard synthesis:
+
 ```bash
-# 1. Milestone 4 Executive Dashboard (Dynamic Synthesis)
+# 1. Executive Dashboard (Dynamic Knowledge Base Synthesis)
 python run.py dashboard                                  # Full Dashboard summary
 python run.py dashboard --focus "Sprint 4"               # Focused Dashboard on Sprint 4
 python run.py dashboard --focus "hotel operations"       # Focused on Hotel Operations
 
-# 2. Ingestion & RAG
-python run.py ingest path/to/document.pdf
+# 2. Ingestion & Semantic Retrieval
+python run.py ingest path/to/project_charter.docx
 python run.py ingest path/to/sprint_tasks.csv
 python run.py query "Who is responsible for authentication?" --top-k 5
-python run.py stats                                      # Knowledge base stats
+python run.py stats                                      # Knowledge base statistics
 
-# 3. Milestone 2 Agents
-python run.py agent scope                                # Scope & Deliverables
-python run.py agent risk                                 # Risk Detection & Forecast
-python run.py agent blockers                             # Blockers & Action Items
-python run.py agent all                                  # Full Multi-Agent Pipeline
+# 3. Specialized Multi-Agent Intelligence
+python run.py agent scope                                # Scope & Deliverables Extraction
+python run.py agent risk                                 # Risk Detection & Delivery Forecasting
+python run.py agent blockers                             # Blockers & Action Items Identification
+python run.py agent all                                  # Full Multi-Agent Pipeline Execution
 
-# 4. Milestone 3 Documentation & Health & Chat
-python run.py docs all                                   # Full Documentation Package
-python run.py docs stories                               # User Stories
-python run.py docs risks                                 # Risk Register
-python run.py docs actions                               # Action Checklist
+# 4. Documentation Generation, Health Scoring & Chat
+python run.py docs all                                   # Full Documentation Package Export
+python run.py docs stories                               # Generate Agile User Stories
+python run.py docs risks                                 # Generate Enterprise Risk Register
+python run.py docs actions                               # Generate Action Checklist
 python run.py health                                     # Project Health Scorecard
-python run.py chat "What are the active blockers?"        # Conversational Assistant
+python run.py chat "What are the active blockers?"        # Conversational Intelligence Query
 ```
 
 ---
 
 ## 📡 REST API Reference
 
-### Milestone 1: Ingestion & RAG
+### 1. Document Ingestion & RAG Subsystem
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `POST` | `/api/v1/documents/upload` | Upload & index documents (PDF, DOCX, CSV, TXT) |
-| `GET` | `/api/v1/documents` | List all ingested documents |
-| `GET` | `/api/v1/documents/{id}` | Get document metadata and preview |
-| `DELETE` | `/api/v1/documents/{id}` | Delete document and vector embeddings |
-| `POST` | `/api/v1/rag/query` | Semantic vector retrieval with scores |
-| `GET` | `/api/v1/health` | System health and vector metrics |
+| `GET` | `/api/v1/documents` | List all ingested project documents |
+| `GET` | `/api/v1/documents/{id}` | Get document metadata and text preview |
+| `DELETE` | `/api/v1/documents/{id}` | Delete document and associated vector embeddings |
+| `POST` | `/api/v1/rag/query` | Semantic vector retrieval with confidence scores |
+| `GET` | `/api/v1/health` | System health check and storage metrics |
 
-### Milestone 2: Specialized Agents
+### 2. Specialized Multi-Agent Intelligence
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `POST` | `/api/v1/agents/scope` | Run Scope & Deliverable Extraction Agent |
 | `POST` | `/api/v1/agents/risk-forecast` | Run Risk Detection & Delivery Forecasting Agent |
 | `POST` | `/api/v1/agents/blockers-actions` | Run Blocker & Action Item Identification Agent |
-| `POST` | `/api/v1/agents/analyze-all` | Run all 3 agents and get unified synthesis |
+| `POST` | `/api/v1/agents/analyze-all` | Run complete multi-agent pipeline with unified synthesis |
 
-### Milestone 3: Health Score, Documentation & Chat
+### 3. Health Scoring, Documentation Studio & Conversational Assistant
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `POST` | `/api/v1/m3/health-score` | Calculate Project Health Score (0-100) & dimensions |
-| `POST` | `/api/v1/m3/docs/user-stories` | Generate Agile User Stories |
+| `POST` | `/api/v1/m3/docs/user-stories` | Generate Agile User Stories with acceptance criteria |
 | `POST` | `/api/v1/m3/docs/risk-register` | Generate Enterprise Risk Register |
 | `POST` | `/api/v1/m3/docs/action-items` | Generate Action Items Checklist |
-| `POST` | `/api/v1/m3/docs/all` | Generate full documentation package (Markdown export) |
-| `POST` | `/api/v1/m3/chat` | Conversational RAG assistant with citations |
+| `POST` | `/api/v1/m3/docs/all` | Generate full documentation package with Markdown export |
+| `POST` | `/api/v1/m3/chat` | Conversational RAG assistant with grounded citations |
 
-### Milestone 4: Executive Dashboard & Incremental Ingestion
+### 4. Executive Dashboard & Incremental Analytics
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/v1/m4/dashboard` | Get dynamic Project Insights & Risk Summary Dashboard |
-| `POST` | `/api/v1/m4/dashboard` | Generate focused dashboard with custom topic/sprint |
-| `GET` | `/api/v1/m4/stats` | Real-time Knowledge Base stats (doc count & chunk count) |
-| `POST` | `/api/v1/m4/incremental-upload` | Incrementally upload new documents without replacing previous data |
+| `GET` | `/api/v1/m4/dashboard` | Get synthesized Executive Project Insights & Risk Summary Dashboard |
+| `POST` | `/api/v1/m4/dashboard` | Generate focused dashboard filtered by custom sprint or topic |
+| `GET` | `/api/v1/m4/stats` | Real-time Knowledge Base metrics (document count & chunk count) |
+| `POST` | `/api/v1/m4/incremental-upload` | Incrementally upload and index new documents without data loss |
 
 ---
 
-## 🧪 Automated Testing (50 Tests Passing)
+## 🧪 Automated Testing Suite (50 Tests Passing)
 
-Run the full automated test suite with pytest:
+The entire platform is backed by an automated test suite verifying all parsers, embeddings, agents, health scoring, API routes, and end-to-end workflows:
 
 ```bash
 .venv\Scripts\pytest -v
 ```
 
-### Test Coverage Summary:
-- **`tests/test_milestone4_e2e.py`**:
-  - Full end-to-end multi-format workflow across PDF, DOCX, CSV, and TXT.
-  - Incremental document upload verification (knowledge base preservation and chunk count growth).
-  - Dynamic dashboard API endpoints (`GET` / `POST` `/api/v1/m4/dashboard`).
-  - Incremental upload API endpoint (`POST` `/api/v1/m4/incremental-upload`).
-  - Real-time knowledge stats endpoint (`GET` `/api/v1/m4/stats`).
-- **`tests/test_m3_api.py`**: Health scoring, user stories, risk register, action checklist, and chat endpoints.
-- **`tests/test_doc_gen_agent.py`**, **`test_health_scorer.py`**, **`test_chat_assistant.py`**: Milestone 3 agents.
-- **`tests/test_agent_api.py`**, **`test_agent_validation.py`**, **`test_scope_agent.py`**, **`test_risk_forecast_agent.py`**, **`test_blocker_action_agent.py`**: Milestone 2 agents.
-- **`tests/test_ingestion.py`**, **`test_chunking.py`**, **`test_embeddings.py`**, **`test_vectorstore.py`**, **`test_retrieval.py`**, **`test_api.py`**: Milestone 1 core engine.
+### Test Coverage Highlights:
+- **`tests/test_milestone4_e2e.py`**: Complete end-to-end multi-format workflow across PDF, DOCX, CSV, and TXT, incremental document upload and knowledge preservation, dashboard API routes, and live statistics endpoints.
+- **`tests/test_m3_api.py`**: Health scoring endpoints, documentation generation routes, and conversational assistant validation.
+- **`tests/test_doc_gen_agent.py`**, **`test_health_scorer.py`**, **`test_chat_assistant.py`**: Unit and integration testing for health diagnostics and documentation agents.
+- **`tests/test_agent_api.py`**, **`test_agent_validation.py`**, **`test_scope_agent.py`**, **`test_risk_forecast_agent.py`**, **`test_blocker_action_agent.py`**: Autonomous multi-agent pipeline validation across all document formats.
+- **`tests/test_ingestion.py`**, **`test_chunking.py`**, **`test_embeddings.py`**, **`test_vectorstore.py`**, **`test_retrieval.py`**, **`test_api.py`**: Document parsing, Unicode normalization, chunk splitting, dense embedding generation, and vector retrieval.
 
 ---
 
-## 🛡️ Milestone 4 Completion Status
+## 🛡️ Enterprise Architecture & Technology Stack
 
-- [x] **Project Insights & Risk Summary Dashboard**: Dynamic health score, scope summary, extracted risks, active blockers, action items, timeline risk, key recommendations.
-- [x] **Incremental Document Upload**: Seamless multi-format upload appending to vector store without data loss.
-- [x] **End-to-End Workflow Testing**: Validated across PDF, DOCX, CSV, TXT, all agents, health scorer, dashboard, and chatbot.
-- [x] **Technical Documentation**: Comprehensive architecture, module layout, API reference, CLI guides, and test suite.
+| Layer | Component | Implementation |
+| :--- | :--- | :--- |
+| **Backend Framework** | FastAPI + Uvicorn | High-throughput asynchronous REST API gateway |
+| **Validation & Schemas** | Pydantic v2 | Strict data modeling, validation, and type safety |
+| **Document Parsers** | `pypdf`, `python-docx`, `pandas` | Multi-format PDF, DOCX, CSV, and TXT parsing |
+| **Normalization** | Python `unicodedata` | NFKC normalization, whitespace sanitization, hyphen resolution |
+| **Chunking Engine** | Hierarchical Boundary Splitter | 500-character target with 100-character sliding overlap |
+| **Dense Embeddings** | `sentence-transformers/all-MiniLM-L6-v2` | 384-dimensional dense semantic vectors with L2 normalization |
+| **Vector Database** | ChromaDB | Local persistent cosine similarity vector database |
+| **Agent Intelligence** | Autonomous Agentic Pipeline | Scope, Risk/Forecast, Blocker, Health Scorer, Doc Gen, Chat |
+| **Integrated Portal** | Vanilla HTML5 / Modern CSS / Vanilla JS | Fast, responsive glassmorphic dark-mode web portal |
+| **Frontend Dashboard** | React 19 + Vite | Componentized executive analytics dashboard |
+| **Test Automation** | Pytest + AnyIO + HTTPX | 50 automated tests with comprehensive subsystem validation |

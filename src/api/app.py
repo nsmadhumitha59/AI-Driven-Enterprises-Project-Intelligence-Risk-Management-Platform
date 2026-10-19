@@ -23,17 +23,17 @@ def create_app() -> FastAPI:
         title=settings.APP_NAME,
         version=settings.APP_VERSION,
         description=(
-            "AI Project Intelligence & Risk Advisor (Milestones 1, 2, 3, and 4)\n\n"
+            "AI-Driven Enterprise Project Intelligence & Risk Management Platform\n\n"
             "Features:\n"
             "- Multi-format document ingestion (PDF, DOCX, CSV, TXT)\n"
             "- Incremental document uploads & vector updates\n"
             "- Content normalization and metadata tracking\n"
             "- Dense vector embeddings via SentenceTransformers & ChromaDB vector store\n"
-            "- Milestone 2 Multi-Agent Intelligence (Scope, Risk Forecasting, Blockers & Actions)\n"
-            "- Milestone 3 Documentation Generation (User Stories, Risk Register, Action Items)\n"
-            "- Milestone 3 Project Health Scoring (Scope Clarity, Timeline Risk, Blocker Severity)\n"
-            "- Milestone 3 Conversational Project Intelligence Assistant (RAG Chatbot)\n"
-            "- Milestone 4 Executive Project Insights & Risk Summary Dashboard"
+            "- Multi-Agent Intelligence (Scope, Risk Forecasting, Blockers & Actions)\n"
+            "- Automated Documentation Generation (User Stories, Risk Register, Action Items)\n"
+            "- Multi-Dimensional Project Health Scoring (Scope Clarity, Timeline Risk, Blocker Severity)\n"
+            "- Conversational Project Intelligence Assistant (RAG Chatbot)\n"
+            "- Executive Project Insights & Risk Summary Dashboard"
         ),
         docs_url="/docs",
         redoc_url="/redoc"

@@ -22,7 +22,7 @@ from src.api.schemas import UploadDocumentResult, BatchUploadResponse
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/m4", tags=["Milestone 4 - Insights & Risk Dashboard"])
+router = APIRouter(prefix="/api/v1/m4", tags=["Executive Insights & Risk Dashboard"])
 
 # Shared singletons
 _ingestion_mgr = IngestionManager()

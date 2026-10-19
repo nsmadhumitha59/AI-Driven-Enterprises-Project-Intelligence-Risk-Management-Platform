@@ -19,7 +19,7 @@ from src.rag.retriever import SemanticRetriever
 from src.rag.embeddings import EmbeddingService
 from src.rag.vectorstore import ChromaVectorStore
 
-router = APIRouter(prefix="/api/v1/agents", tags=["Milestone 2 - Specialized Agents"])
+router = APIRouter(prefix="/api/v1/agents", tags=["Specialized Multi-Agent Intelligence"])
 
 # Shared pipeline instances
 retriever = SemanticRetriever(

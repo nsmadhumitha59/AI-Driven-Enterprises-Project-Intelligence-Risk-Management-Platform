@@ -26,7 +26,7 @@ from .schemas import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1", tags=["Milestone 1 - Ingestion & RAG"])
+router = APIRouter(prefix="/api/v1", tags=["Ingestion & RAG"])
 
 # Global module instances
 ingestion_mgr = IngestionManager()

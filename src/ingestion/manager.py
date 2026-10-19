@@ -141,13 +141,14 @@ class IngestionManager:
         if not file_type:
             raise ValueError(f"Unsupported file type for {orig_name}. Supported: PDF, DOCX, CSV, TXT")
 
-        # Duplicate prevention
+        # Duplicate handling: if existing document is re-uploaded, clean previous version and re-index
         duplicate = self.is_duplicate(file_path, orig_name)
         if duplicate:
-            raise ValueError(
-                f"Duplicate document detected: '{orig_name}' is already indexed in the repository "
-                f"(Document ID: {duplicate.document_id}). Duplicate indexing prevented."
-            )
+            logger.info(f"Re-indexing existing document '{orig_name}' (Previous ID: {duplicate.document_id})")
+            try:
+                self.delete_document(duplicate.document_id)
+            except Exception as e:
+                logger.warning(f"Failed to remove previous version during re-indexing: {e}")
 
         parser = self._parsers.get(file_type)
         if not parser:

@@ -1,5 +1,5 @@
 """
-Main Entrypoint and CLI Launcher for AI Project Intelligence & Risk Advisor (Milestone 1).
+Main Entrypoint and CLI Launcher for AI-Driven Enterprise Project Intelligence & Risk Management Platform.
 """
 import sys
 import argparse
@@ -18,7 +18,7 @@ def cmd_serve(args):
     port = args.port or settings.PORT
     host = args.host or settings.HOST
     print(f"\n=======================================================")
-    print(f"🚀 Starting {settings.APP_NAME} (Milestone 1)")
+    print(f"🚀 Starting {settings.APP_NAME}")
     print(f"📍 Web UI & Portal:  http://{host}:{port}/")
     print(f"📚 API Documentation: http://{host}:{port}/docs")
     print(f"⚡ Embedding Model:   {settings.EMBEDDING_MODEL_NAME}")
