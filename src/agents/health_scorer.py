@@ -32,9 +32,11 @@ class DimensionScore(BaseModel):
     dimension_name: str
     score: float = Field(..., ge=0.0, le=100.0)
     status: str  # Healthy, At Risk, Critical
-    weight: float = 0.33
+    weight: float = 0.20
     summary: str
     key_factors: List[str] = Field(default_factory=list)
+    evidence: List[str] = Field(default_factory=list, description="Direct supporting evidence from uploaded documents")
+    recommendation: Optional[str] = None
 
 
 class HealthRecommendation(BaseModel):
@@ -50,9 +52,21 @@ class ProjectHealthResult(BaseAgentResult):
     overall_health_score: float = Field(..., ge=0.0, le=100.0)
     health_status: str  # Healthy, At Risk, Critical
     status_color: str   # green, yellow, red
+    
+    # 6 Core Dimensions per Requirement 10
     scope_clarity_score: float = Field(..., ge=0.0, le=100.0)
     timeline_risk_score: float = Field(..., ge=0.0, le=100.0)
+    timeline_health_score: float = Field(default=0.0, ge=0.0, le=100.0)
+    risk_exposure_score: float = Field(default=0.0, ge=0.0, le=100.0)
     blocker_score: float = Field(..., ge=0.0, le=100.0)
+    blocker_severity_score: float = Field(default=0.0, ge=0.0, le=100.0)
+    action_item_progress_score: float = Field(default=0.0, ge=0.0, le=100.0)
+    milestone_completion_score: float = Field(default=0.0, ge=0.0, le=100.0)
+    
+    is_reliable: bool = True
+    unreliable_reason: Optional[str] = None
+    scoring_methodology: Dict[str, Any] = Field(default_factory=dict)
+    
     dimensions: List[DimensionScore] = Field(default_factory=list)
     key_drivers: List[str] = Field(default_factory=list)
     recommendations: List[HealthRecommendation] = Field(default_factory=list)
@@ -236,11 +250,107 @@ class ProjectHealthScorer(BaseAgent):
         blocker_status = "Healthy" if blocker_score >= 75 else "At Risk" if blocker_score >= 50 else "Critical"
 
         # -------------------------------------------------------------
-        # 4. Overall Weighted Health Score & Status
+        # 4. Risk Exposure Dimension (0–100, 100 = minimal risk exposure)
         # -------------------------------------------------------------
-        # Weights: 35% Scope Clarity, 35% Blocker Score, 30% Timeline Score
+        risk_exposure_factors = []
+        risk_exposure_evidence = []
+        risk_exposure_score = 95.0
+
+        risk_exposure_score -= len(critical_risks) * 20.0
+        risk_exposure_score -= len(high_risks) * 12.0
+        risk_exposure_score -= len(medium_risks) * 5.0
+
+        if len(critical_risks) > 0:
+            risk_exposure_factors.append(f"{len(critical_risks)} Critical severity risk item(s) active")
+            for cr in critical_risks[:2]:
+                risk_exposure_evidence.append(f"Critical Risk: {cr.title} ({cr.source_document})")
+        if len(high_risks) > 0:
+            risk_exposure_factors.append(f"{len(high_risks)} High severity risk item(s) detected")
+            for hr in high_risks[:2]:
+                risk_exposure_evidence.append(f"High Risk: {hr.title} ({hr.source_document})")
+        if len(medium_risks) > 0:
+            risk_exposure_factors.append(f"{len(medium_risks)} Moderate/Medium risk item(s) monitored")
+        if not critical_risks and not high_risks and not medium_risks:
+            risk_exposure_factors.append("Low overall project risk profile detected across documents")
+
+        risk_exposure_score = max(10.0, min(100.0, round(risk_exposure_score, 1)))
+        risk_exposure_status = "Healthy" if risk_exposure_score >= 75 else "At Risk" if risk_exposure_score >= 50 else "Critical"
+
+        # -------------------------------------------------------------
+        # 5. Action Item Progress Dimension (0–100, 100 = complete/on track)
+        # -------------------------------------------------------------
+        action_factors = []
+        action_evidence = []
+        action_score = 80.0
+
+        unassigned_actions = [a for a in blocker_res.action_items if not a.assignee or a.assignee == "Unassigned"]
+        assigned_actions = [a for a in blocker_res.action_items if a.assignee and a.assignee != "Unassigned"]
+        completed_actions = [a for a in blocker_res.action_items if "complete" in a.status.lower() or "done" in a.status.lower()]
+
+        if num_actions == 0:
+            action_factors.append("No pending action items detected in current artifacts")
+            action_score = 75.0
+        else:
+            action_factors.append(f"{num_actions} total action item(s) tracked")
+            if assigned_actions:
+                action_factors.append(f"{len(assigned_actions)} action item(s) with confirmed owners")
+                for aa in assigned_actions[:2]:
+                    action_evidence.append(f"Action: {aa.task_description} -> {aa.assignee}")
+            if unassigned_actions:
+                action_score -= len(unassigned_actions) * 8.0
+                action_factors.append(f"{len(unassigned_actions)} action item(s) currently unassigned")
+            if completed_actions:
+                action_score += min(len(completed_actions) * 10.0, 20.0)
+                action_factors.append(f"{len(completed_actions)} action item(s) completed")
+
+        action_score = max(10.0, min(100.0, round(action_score, 1)))
+        action_status = "Healthy" if action_score >= 75 else "At Risk" if action_score >= 50 else "Critical"
+
+        # -------------------------------------------------------------
+        # 6. Milestone Completion Dimension (0–100, 100 = completed/on track)
+        # -------------------------------------------------------------
+        milestone_factors = []
+        milestone_evidence = []
+        milestone_score = 80.0
+
+        if num_milestones > 0:
+            milestone_factors.append(f"{num_milestones} milestone(s) articulated")
+            for m in scope_res.milestones[:2]:
+                milestone_evidence.append(f"Milestone: {m.title} (Target: {m.target_timeline or 'TBD'})")
+        else:
+            milestone_factors.append("Milestone milestones synthesized from project charter")
+
+        if num_deliverables > 0:
+            milestone_factors.append(f"{num_deliverables} deliverable(s) aligned with milestones")
+            for d in scope_res.deliverables[:2]:
+                milestone_evidence.append(f"Deliverable: {d.name} (Owner: {d.owner})")
+
+        # Deduct if high slippage probability
+        slippage_pct = getattr(getattr(risk_res, "forecast", None), "slippage_probability", 0.15)
+        if slippage_pct > 0.40:
+            milestone_score -= 25.0
+            milestone_factors.append(f"Delivery slippage probability at {round(slippage_pct * 100, 1)}%")
+        elif slippage_pct > 0.20:
+            milestone_score -= 10.0
+            milestone_factors.append(f"Moderate delivery slippage potential ({round(slippage_pct * 100, 1)}%)")
+        else:
+            milestone_score += 10.0
+            milestone_factors.append("Milestones tracking within anticipated delivery windows")
+
+        milestone_score = max(10.0, min(100.0, round(milestone_score, 1)))
+        milestone_status = "Healthy" if milestone_score >= 75 else "At Risk" if milestone_score >= 50 else "Critical"
+
+        # -------------------------------------------------------------
+        # 7. Overall Weighted Health Score (Configurable Methodology)
+        # -------------------------------------------------------------
+        # Weights: Scope (20%), Timeline (20%), Risk (20%), Blockers (15%), Actions (15%), Milestones (10%)
         overall_score = round(
-            (0.35 * scope_score) + (0.35 * blocker_score) + (0.30 * timeline_score),
+            (0.20 * scope_score) +
+            (0.20 * timeline_score) +
+            (0.20 * risk_exposure_score) +
+            (0.15 * blocker_score) +
+            (0.15 * action_score) +
+            (0.10 * milestone_score),
             1
         )
         overall_score = max(10.0, min(100.0, overall_score))
@@ -255,31 +365,66 @@ class ProjectHealthScorer(BaseAgent):
             overall_status = "Critical"
             status_color = "#ef4444"  # Red
 
-        # Compile Dimensions
+        # Scope & Timeline evidence mapping
+        scope_evidence = [f"Goal: {g.statement}" for g in scope_res.project_goals[:2]]
+        timeline_evidence = [f"Risk signal: {r.reason}" for r in schedule_risks[:2]]
+        blocker_evidence = [f"Blocker: {b.description}" for b in blocker_res.active_blockers[:2]]
+
+        # Compile 6 Dimensions
         dimensions = [
             DimensionScore(
                 dimension_name="Scope Clarity",
                 score=scope_score,
                 status=scope_status,
-                weight=0.35,
-                summary=f"Clarity index: {scope_score}/100. Evaluates definition of project goals, deliverables, and requirements.",
-                key_factors=scope_factors
+                weight=0.20,
+                summary=f"Clarity index: {scope_score}/100. Evaluates definition of project goals, deliverables, and boundaries.",
+                key_factors=scope_factors,
+                evidence=scope_evidence
             ),
             DimensionScore(
                 dimension_name="Timeline Risk",
                 score=timeline_score,
                 status=timeline_status,
-                weight=0.30,
+                weight=0.20,
                 summary=f"Schedule confidence: {timeline_score}/100. Evaluates deadline slippage, vendor delays, and schedule feasibility.",
-                key_factors=timeline_factors
+                key_factors=timeline_factors,
+                evidence=timeline_evidence
+            ),
+            DimensionScore(
+                dimension_name="Risk Exposure",
+                score=risk_exposure_score,
+                status=risk_exposure_status,
+                weight=0.20,
+                summary=f"Risk exposure index: {risk_exposure_score}/100. Evaluates critical and high-impact vulnerabilities.",
+                key_factors=risk_exposure_factors,
+                evidence=risk_exposure_evidence
             ),
             DimensionScore(
                 dimension_name="Blocker & Issue Severity",
                 score=blocker_score,
                 status=blocker_status,
-                weight=0.35,
+                weight=0.15,
                 summary=f"Blocker index: {blocker_score}/100. Evaluates active impediments, unresolved dependencies, and pending decisions.",
-                key_factors=blocker_factors
+                key_factors=blocker_factors,
+                evidence=blocker_evidence
+            ),
+            DimensionScore(
+                dimension_name="Action Item Progress",
+                score=action_score,
+                status=action_status,
+                weight=0.15,
+                summary=f"Action item index: {action_score}/100. Evaluates task assignments, completions, and ownership clarity.",
+                key_factors=action_factors,
+                evidence=action_evidence
+            ),
+            DimensionScore(
+                dimension_name="Milestone Completion",
+                score=milestone_score,
+                status=milestone_status,
+                weight=0.10,
+                summary=f"Milestone tracking index: {milestone_score}/100. Evaluates progress towards committed milestone deliverables.",
+                key_factors=milestone_factors,
+                evidence=milestone_evidence
             )
         ]
 
@@ -334,10 +479,9 @@ class ProjectHealthScorer(BaseAgent):
 
         exec_summary = (
             f"Overall Project Health is rated at {overall_score}/100 ({overall_status}). "
-            f"Scope Clarity stands at {scope_score}/100 ({scope_status}), "
-            f"Timeline Feasibility at {timeline_score}/100 ({timeline_status}), and "
-            f"Blocker Severity at {blocker_score}/100 ({blocker_status}) across "
-            f"{len(retrieval_chunks)} analyzed knowledge chunks."
+            f"Scope Clarity is at {scope_score}/100, Timeline Risk at {timeline_score}/100, "
+            f"Risk Exposure at {risk_exposure_score}/100, Blocker Severity at {blocker_score}/100, "
+            f"Action Item Progress at {action_score}/100, and Milestone Completion at {milestone_score}/100."
         )
 
         elapsed_ms = round((time.perf_counter() - start_time) * 1000, 2)
@@ -353,7 +497,29 @@ class ProjectHealthScorer(BaseAgent):
             status_color=status_color,
             scope_clarity_score=scope_score,
             timeline_risk_score=timeline_score,
+            timeline_health_score=timeline_score,
+            risk_exposure_score=risk_exposure_score,
             blocker_score=blocker_score,
+            blocker_severity_score=blocker_score,
+            action_item_progress_score=action_score,
+            milestone_completion_score=milestone_score,
+            is_reliable=True,
+            scoring_methodology={
+                "formula": "0.20*Scope + 0.20*Timeline + 0.20*RiskExposure + 0.15*Blockers + 0.15*Actions + 0.10*Milestones",
+                "weights": {
+                    "scope_clarity": 0.20,
+                    "timeline_health": 0.20,
+                    "risk_exposure": 0.20,
+                    "blocker_severity": 0.15,
+                    "action_item_progress": 0.15,
+                    "milestone_completion": 0.10
+                },
+                "thresholds": {
+                    "healthy": ">= 75.0",
+                    "at_risk": "50.0 - 74.9",
+                    "critical": "< 50.0"
+                }
+            },
             dimensions=dimensions,
             key_drivers=key_drivers,
             recommendations=recommendations,
@@ -383,17 +549,24 @@ class ProjectHealthScorer(BaseAgent):
             retrieval_chunks = self.retrieve_context(custom_query=query_context)
 
         if not retrieval_chunks:
-            empty_msg = "No relevant information found in the uploaded documents."
+            empty_msg = "Sufficient project evidence is unavailable. Health score cannot be calculated reliably until project documents are uploaded."
             return ProjectHealthResult(
                 agent_name=self.name,
                 agent_role=self.role,
                 execution_status=AgentExecutionStatus.NO_DATA,
                 overall_health_score=0.0,
-                health_status="No Documents",
+                health_status="Insufficient Data",
                 status_color="#6b7280",
                 scope_clarity_score=0.0,
                 timeline_risk_score=0.0,
+                timeline_health_score=0.0,
+                risk_exposure_score=0.0,
                 blocker_score=0.0,
+                blocker_severity_score=0.0,
+                action_item_progress_score=0.0,
+                milestone_completion_score=0.0,
+                is_reliable=False,
+                unreliable_reason=empty_msg,
                 notes=empty_msg,
                 executive_summary=empty_msg,
                 recommendations=[],

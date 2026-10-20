@@ -8,9 +8,31 @@ export default function DocumentUpload({ onUploadSuccess }) {
   const [errorMessage, setErrorMessage] = useState('');
   const fileInputRef = useRef(null);
 
+  const ALLOWED_EXTENSIONS = ['pdf', 'docx', 'doc', 'csv', 'txt'];
+  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
+  const validateFiles = (selectedFiles) => {
+    for (const f of selectedFiles) {
+      const ext = f.name.split('.').pop().toLowerCase();
+      if (!ALLOWED_EXTENSIONS.includes(ext)) {
+        return `Unsupported file format: "${f.name}". Only PDF, DOCX, CSV, and TXT are permitted.`;
+      }
+      if (f.size > MAX_FILE_SIZE) {
+        return `File too large: "${f.name}" (${(f.size / (1024 * 1024)).toFixed(1)} MB). Maximum allowed size is 50 MB.`;
+      }
+    }
+    return null;
+  };
+
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFiles(Array.from(e.target.files));
+      const selected = Array.from(e.target.files);
+      const validationError = validateFiles(selected);
+      if (validationError) {
+        setErrorMessage(validationError);
+        return;
+      }
+      setFiles(selected);
       setErrorMessage('');
       setUploadResult(null);
     }
@@ -19,7 +41,13 @@ export default function DocumentUpload({ onUploadSuccess }) {
   const handleDrop = (e) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      setFiles(Array.from(e.dataTransfer.files));
+      const selected = Array.from(e.dataTransfer.files);
+      const validationError = validateFiles(selected);
+      if (validationError) {
+        setErrorMessage(validationError);
+        return;
+      }
+      setFiles(selected);
       setErrorMessage('');
       setUploadResult(null);
     }
@@ -31,6 +59,12 @@ export default function DocumentUpload({ onUploadSuccess }) {
 
   const handleUpload = async () => {
     if (files.length === 0) return;
+
+    const validationError = validateFiles(files);
+    if (validationError) {
+      setErrorMessage(validationError);
+      return;
+    }
 
     setIsUploading(true);
     setErrorMessage('');
@@ -135,6 +169,26 @@ export default function DocumentUpload({ onUploadSuccess }) {
               Clear Selection
             </button>
           </div>
+
+          {isUploading && (
+            <div style={{ marginTop: '16px', background: 'rgba(15, 23, 42, 0.7)', borderRadius: '8px', padding: '12px', border: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#a5b4fc', marginBottom: '6px' }}>
+                <span>Ingesting text, generating dense embeddings & vector indexing...</span>
+                <span>In Progress</span>
+              </div>
+              <div style={{ width: '100%', height: '8px', background: '#1e293b', borderRadius: '4px', overflow: 'hidden' }}>
+                <div
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    background: 'linear-gradient(90deg, #6366f1, #06b6d4, #10b981)',
+                    animation: 'spin 2s linear infinite',
+                    borderRadius: '4px',
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
 

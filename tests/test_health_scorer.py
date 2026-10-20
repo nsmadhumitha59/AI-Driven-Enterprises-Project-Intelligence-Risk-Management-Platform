@@ -37,13 +37,17 @@ class TestProjectHealthScorer:
         assert res.execution_status.value == "success"
         assert 0.0 <= res.overall_health_score <= 100.0
         assert res.health_status in ["Healthy", "At Risk", "Critical"]
-        assert len(res.dimensions) == 3
+        assert len(res.dimensions) in [3, 6]
 
         # Dimension checks
         dim_names = [d.dimension_name for d in res.dimensions]
         assert "Scope Clarity" in dim_names
         assert "Timeline Risk" in dim_names
         assert "Blocker & Issue Severity" in dim_names
+        if len(res.dimensions) == 6:
+            assert "Risk Exposure" in dim_names
+            assert "Action Item Progress" in dim_names
+            assert "Milestone Completion" in dim_names
 
         for d in res.dimensions:
             assert 0.0 <= d.score <= 100.0

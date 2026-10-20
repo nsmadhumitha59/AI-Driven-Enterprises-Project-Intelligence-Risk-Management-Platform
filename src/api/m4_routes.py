@@ -448,6 +448,8 @@ async def get_risk_matrix(query_context: Optional[str] = None):
             "forecast_status": risk_res.forecast.overall_status.value if hasattr(risk_res.forecast.overall_status, "value") else str(risk_res.forecast.overall_status),
             "slippage_probability": risk_res.forecast.slippage_probability,
             "risk_matrix": risk_res.risk_matrix,
+            "matrix_5x5": risk_res.matrix_5x5,
+            "unscored_risks": [r.dict() for r in risk_res.unscored_risks],
             "detected_risks": [r.dict() for r in risk_res.detected_risks]
         }
     except Exception as e:

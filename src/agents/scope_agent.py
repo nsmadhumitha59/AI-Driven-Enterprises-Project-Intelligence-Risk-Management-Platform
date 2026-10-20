@@ -89,14 +89,22 @@ class ResponsibilityAssignment(BaseModel):
 class ScopeExtractionResult(BaseAgentResult):
     """Full structured output of the Scope and Deliverable Extraction Agent."""
     project_title: Optional[str] = None
+    project_name: Optional[str] = None  # Alias for Requirement 5
+    project_objectives: List[str] = Field(default_factory=list)  # Objectives per Requirement 5
     project_goals: List[ProjectGoal] = Field(default_factory=list)
     goals: List[ProjectGoal] = Field(default_factory=list)  # Backward-compatible alias
+    scope_description: Optional[str] = None
     deliverables: List[DeliverableItem] = Field(default_factory=list)
     milestones: List[MilestoneItem] = Field(default_factory=list)
     timelines: List[TimelineItem] = Field(default_factory=list)
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
     responsible_owners: List[ResponsibilityAssignment] = Field(default_factory=list)
     responsibilities: List[ResponsibilityAssignment] = Field(default_factory=list)  # Backward-compatible alias
+    assigned_team_members: List[str] = Field(default_factory=list)
+    project_dependencies: List[str] = Field(default_factory=list)
     scope: ScopeBoundary = Field(default_factory=ScopeBoundary)
+    scope_boundaries: ScopeBoundary = Field(default_factory=ScopeBoundary)  # Alias
     summary: str = ""
     empty_goals_message: Optional[str] = None
 
@@ -540,6 +548,35 @@ class ScopeExtractionAgent(BaseAgent):
         if not extracted_goals:
             empty_goals_msg = "No relevant information found in the uploaded documents."
 
+        # Extract dates and assigned team members
+        detected_dates = [t.target_deadline for t in timelines_list if t.target_deadline and t.target_deadline != "Planned"]
+        start_date = detected_dates[0] if detected_dates else None
+        end_date = detected_dates[-1] if len(detected_dates) > 1 else (detected_dates[0] if detected_dates else None)
+
+        team_members = sorted(list(set(
+            a.role_or_person.strip() for a in assignments_map.values() 
+            if a.role_or_person and a.role_or_person.lower() not in ["unassigned", "project team", "unknown"]
+        )))
+        if not team_members:
+            for d in deliverables_list:
+                if d.owner and d.owner.lower() not in ["unassigned", "project team", "unknown"]:
+                    team_members.append(d.owner.strip())
+            team_members = sorted(list(set(team_members)))
+
+        # Extract dependencies from constraints and deliverables
+        dependencies = list(constraints_items)
+        for d in deliverables_list:
+            if "dependency" in d.description.lower() or "requires" in d.description.lower():
+                dependencies.append(f"{d.name}: {d.description}")
+        dependencies = sorted(list(set(dependencies)))
+
+        scope_desc = (
+            f"The scope of {project_title or 'this initiative'} encompasses {len(deliverables_list)} primary deliverables "
+            f"across {len(milestones_list)} tracked milestones. "
+        )
+        if in_scope_items:
+            scope_desc += f"Key in-scope functional areas include: {', '.join(in_scope_items[:4])}."
+
         summary_text = (
             f"Extracted {len(extracted_goals)} project goals, {len(deliverables_list)} deliverables, "
             f"{len(milestones_list)} milestones, {len(timelines_list)} deadlines, and {len(assignments_map)} responsible owners across "
@@ -548,6 +585,13 @@ class ScopeExtractionAgent(BaseAgent):
 
         elapsed_ms = round((time.perf_counter() - start_time) * 1000, 2)
 
+        boundary_obj = ScopeBoundary(
+            in_scope=in_scope_items,
+            out_of_scope=out_of_scope_items,
+            constraints=constraints_items,
+            assumptions=assumptions_items
+        )
+
         return ScopeExtractionResult(
             agent_name=self.name,
             agent_role=self.role,
@@ -555,19 +599,22 @@ class ScopeExtractionAgent(BaseAgent):
             retrieved_chunks_count=len(retrieval_chunks),
             grounding_references=grounding_refs,
             project_title=project_title or "Project Workspace",
+            project_name=project_title or "Project Workspace",
+            project_objectives=[g.statement for g in extracted_goals],
             project_goals=extracted_goals,
             goals=extracted_goals,
-            scope=ScopeBoundary(
-                in_scope=in_scope_items,
-                out_of_scope=out_of_scope_items,
-                constraints=constraints_items,
-                assumptions=assumptions_items
-            ),
+            scope_description=scope_desc,
+            scope=boundary_obj,
+            scope_boundaries=boundary_obj,
             deliverables=deliverables_list,
             milestones=milestones_list,
             timelines=timelines_list,
+            start_date=start_date,
+            end_date=end_date,
             responsible_owners=list(assignments_map.values()),
             responsibilities=list(assignments_map.values()),
+            assigned_team_members=team_members,
+            project_dependencies=dependencies,
             summary=summary_text,
             empty_goals_message=empty_goals_msg,
             notes=empty_goals_msg,

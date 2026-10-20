@@ -276,7 +276,7 @@ class ProjectIntelligenceChatAssistant(BaseAgent):
         # -------------------------------------------------------------
         # Intent 5: "What are the project deliverables?" / Scope & Goals
         # -------------------------------------------------------------
-        elif any(p in q_lower for p in ["deliverable", "project scope", "project goals", "objectives", "milestone"]):
+        elif any(p in q_lower for p in ["deliverable", "project scope", "project goals", "objectives"]):
             scope_res = self.scope_agent.analyze(retrieval_chunks=retrieval_chunks)
 
             lines = [f"### 🎯 Project Scope & Deliverables\n"]
@@ -305,7 +305,121 @@ class ProjectIntelligenceChatAssistant(BaseAgent):
             answer = "\n".join(lines) if len(lines) > 2 else "No relevant information found in the uploaded documents regarding project deliverables or goals."
             followups = [
                 "Are we on track?",
-                "Generate user stories from deliverables",
+                "Which milestones are delayed?",
+                "What are our biggest risks?"
+            ]
+
+        # -------------------------------------------------------------
+        # Intent 6: "Which milestones are delayed?" / Delayed Milestones
+        # -------------------------------------------------------------
+        elif any(p in q_lower for p in ["delayed", "delayed milestone", "which milestones are delayed", "milestone delay", "overdue"]):
+            scope_res = self.scope_agent.analyze(retrieval_chunks=retrieval_chunks)
+            risk_res = self.risk_agent.analyze(retrieval_chunks=retrieval_chunks)
+            
+            all_risks = getattr(risk_res, "detected_risks", None) or getattr(risk_res, "identified_risks", [])
+            schedule_risks = [r for r in all_risks if "schedule" in str(getattr(r, "category", "")).lower() or "overdue" in r.reason.lower() or "delayed" in r.reason.lower()]
+
+            lines = ["### ⏱️ Delayed Milestones & Schedule Status\n"]
+            lines.append(f"Delivery Forecast Status: **{risk_res.forecast.overall_status.value}** (Slippage Probability: `{round(risk_res.forecast.slippage_probability * 100, 1)}%`)\n")
+
+            if schedule_risks:
+                lines.append("#### Delayed Milestones & Schedule Slippages:")
+                for r in schedule_risks:
+                    lines.append(f"- **{r.title}**: {r.reason}")
+                    if r.suggested_mitigation:
+                        lines.append(f"  *Mitigation*: {r.suggested_mitigation}")
+                lines.append("")
+            else:
+                lines.append("No explicit milestone delays or overdue tags were identified in the uploaded project documents.\n")
+
+            if scope_res.milestones:
+                lines.append("#### Tracked Milestones:")
+                for m in scope_res.milestones:
+                    target = f" — Due: {m.target_timeline}" if m.target_timeline else ""
+                    lines.append(f"- {m.title}{target} (Status: `{m.status}`)")
+
+            answer = "\n".join(lines)
+            followups = [
+                "Are we on track?",
+                "What are the current blockers?",
+                "Who is responsible for each task?"
+            ]
+
+        # -------------------------------------------------------------
+        # Intent 7: "Who is responsible for each task?" / Responsibilities
+        # -------------------------------------------------------------
+        elif any(p in q_lower for p in ["who is responsible", "responsible for each task", "assignee", "ownership", "responsibilities", "assigned"]):
+            scope_res = self.scope_agent.analyze(retrieval_chunks=retrieval_chunks)
+            blocker_res = self.blocker_agent.analyze(retrieval_chunks=retrieval_chunks)
+
+            lines = ["### 👥 Project Task Responsibilities & Assignments\n"]
+            lines.append(f"Extracted ownership mappings from `{', '.join(grounded_docs)}`:\n")
+
+            has_assignments = False
+            if scope_res.responsible_owners:
+                has_assignments = True
+                lines.append("#### Functional Area Ownership:")
+                for resp in scope_res.responsible_owners:
+                    lines.append(f"- **{resp.role_or_person}**: {resp.responsibility_area}")
+                lines.append("")
+
+            if blocker_res.action_items:
+                has_assignments = True
+                lines.append("#### Assigned Action Items:")
+                for act in blocker_res.action_items:
+                    due = f" (Due: {act.due_date})" if act.due_date else ""
+                    lines.append(f"- **{act.assignee}**: {act.task_description}{due} [Status: `{act.status}`]")
+                lines.append("")
+
+            if scope_res.deliverables:
+                has_assignments = True
+                lines.append("#### Deliverable Leads:")
+                for d in scope_res.deliverables:
+                    lines.append(f"- **{d.name}**: Owner `{d.owner}` (Status: `{d.status}`)")
+
+            if not has_assignments:
+                lines.append("No explicit ownership assignments were detected in the currently uploaded documents.")
+
+            answer = "\n".join(lines)
+            followups = [
+                "What are the pending action items?",
+                "What are our biggest risks?",
+                "Are we on track?"
+            ]
+
+        # -------------------------------------------------------------
+        # Intent 8: "Which dependencies are unresolved?" / Dependencies
+        # -------------------------------------------------------------
+        elif any(p in q_lower for p in ["dependencies", "unresolved dependencies", "dependency", "external dependencies", "unresolved"]):
+            blocker_res = self.blocker_agent.analyze(retrieval_chunks=retrieval_chunks)
+            risk_res = self.risk_agent.analyze(retrieval_chunks=retrieval_chunks)
+
+            dep_blockers = [b for b in blocker_res.active_blockers if b.related_dependency or "dependency" in b.category.lower()]
+            all_risks = getattr(risk_res, "detected_risks", None) or getattr(risk_res, "identified_risks", [])
+            dep_risks = [r for r in all_risks if "dependency" in str(getattr(r, "category", "")).lower()]
+
+            lines = ["### 🔗 Unresolved Dependencies & External Blockers\n"]
+            if dep_blockers or dep_risks:
+                if dep_blockers:
+                    lines.append("#### Active Dependency Blockers:")
+                    for b in dep_blockers:
+                        dep_text = f" (Dependency: {b.related_dependency})" if b.related_dependency else ""
+                        lines.append(f"- **{b.description}**{dep_text} — Owner: `{b.owner}` [Severity: `{b.severity}`]")
+                    lines.append("")
+
+                if dep_risks:
+                    lines.append("#### Dependency Risks:")
+                    for r in dep_risks:
+                        lines.append(f"- **{r.title}**: {r.reason}")
+                        if r.suggested_mitigation:
+                            lines.append(f"  *Mitigation*: {r.suggested_mitigation}")
+            else:
+                lines.append(f"No unresolved external dependencies or blocking dependencies identified across `{', '.join(grounded_docs)}`.")
+
+            answer = "\n".join(lines)
+            followups = [
+                "What are the current blockers?",
+                "Are we on track?",
                 "What are our biggest risks?"
             ]
 

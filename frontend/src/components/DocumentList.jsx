@@ -102,6 +102,7 @@ export default function DocumentList({ documents, onDocumentDeleted }) {
               <tr>
                 <th>Format</th>
                 <th>Filename</th>
+                <th>Upload Date</th>
                 <th>Doc ID</th>
                 <th>Size</th>
                 <th>Chunks</th>
@@ -115,11 +116,23 @@ export default function DocumentList({ documents, onDocumentDeleted }) {
                 const docId = getDocId(doc);
                 const docName = getDocName(doc);
                 const docHash = getDocHash(doc);
+                const uploadDate = doc.created_at || doc.uploaded_at 
+                  ? new Date(doc.created_at || doc.uploaded_at).toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })
+                  : 'Recent';
                 return (
                   <tr key={docId}>
                     <td>{getFormatBadge(doc.file_type)}</td>
                     <td>
                       <strong style={{ color: '#ffffff' }}>{docName}</strong>
+                    </td>
+                    <td style={{ fontSize: '0.8rem', color: '#c7d2fe', whiteSpace: 'nowrap' }}>
+                      {uploadDate}
                     </td>
                     <td>
                       <code style={{ fontSize: '0.78rem', color: 'var(--accent-cyan)' }}>

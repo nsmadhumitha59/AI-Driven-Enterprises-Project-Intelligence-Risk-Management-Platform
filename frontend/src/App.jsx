@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import ProjectDashboard from './components/ProjectDashboard';
-import DocumentUpload from './components/DocumentUpload';
-import DocumentList from './components/DocumentList';
-import SemanticSearch from './components/SemanticSearch';
-import SystemArchitecture from './components/SystemArchitecture';
+import DocumentsView from './components/DocumentsView';
+import ScopeDeliverablesView from './components/ScopeDeliverablesView';
+import RiskAnalysisView from './components/RiskAnalysisView';
+import BlockersActionsView from './components/BlockersActionsView';
+import GeneratedDocsView from './components/GeneratedDocsView';
+import ChatAssistantView from './components/ChatAssistantView';
 import { getHealth, listDocuments, getArchitecture } from './services/api';
 
 export default function App() {
@@ -27,14 +29,13 @@ export default function App() {
       const arch = await getArchitecture();
       setArchitectureInfo(arch);
     } catch (err) {
-      console.warn('Backend connection failed:', err);
+      console.warn('Backend connection check:', err);
       setIsHealthy(false);
     }
   };
 
   const handleUploadSuccess = async () => {
     await fetchBackendData();
-    // Auto-trigger dashboard refresh and switch to dashboard so output appears automatically
     setDashboardRefreshKey((prev) => prev + 1);
     setActiveTab('dashboard');
   };
@@ -46,7 +47,7 @@ export default function App() {
 
   useEffect(() => {
     fetchBackendData();
-    const interval = setInterval(fetchBackendData, 10000);
+    const interval = setInterval(fetchBackendData, 12000);
     return () => clearInterval(interval);
   }, []);
 
@@ -58,37 +59,49 @@ export default function App() {
         architectureInfo={architectureInfo}
       />
 
-      {/* Navigation Tabs */}
-      <nav className="nav-tabs">
+      {/* Top Navigation Bar adhering to Requirement 13 */}
+      <nav className="nav-tabs" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '24px' }}>
         <button
           className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
           onClick={() => setActiveTab('dashboard')}
         >
-          <span className="tab-icon">📊</span> Executive Dashboard
+          <span className="tab-icon">📊</span> Dashboard
         </button>
         <button
-          className={`tab-btn ${activeTab === 'upload' ? 'active' : ''}`}
-          onClick={() => setActiveTab('upload')}
+          className={`tab-btn ${activeTab === 'documents' ? 'active' : ''}`}
+          onClick={() => setActiveTab('documents')}
         >
-          <span className="tab-icon">📥</span> Ingestion & Upload
+          <span className="tab-icon">📚</span> Documents ({documents.length})
         </button>
         <button
-          className={`tab-btn ${activeTab === 'list' ? 'active' : ''}`}
-          onClick={() => setActiveTab('list')}
+          className={`tab-btn ${activeTab === 'scope' ? 'active' : ''}`}
+          onClick={() => setActiveTab('scope')}
         >
-          <span className="tab-icon">📚</span> Document Repository ({documents.length})
+          <span className="tab-icon">🎯</span> Scope &amp; Deliverables
         </button>
         <button
-          className={`tab-btn ${activeTab === 'search' ? 'active' : ''}`}
-          onClick={() => setActiveTab('search')}
+          className={`tab-btn ${activeTab === 'risk' ? 'active' : ''}`}
+          onClick={() => setActiveTab('risk')}
         >
-          <span className="tab-icon">🔍</span> Semantic Search
+          <span className="tab-icon">🛡️</span> Risk Analysis
         </button>
         <button
-          className={`tab-btn ${activeTab === 'architecture' ? 'active' : ''}`}
-          onClick={() => setActiveTab('architecture')}
+          className={`tab-btn ${activeTab === 'blockers' ? 'active' : ''}`}
+          onClick={() => setActiveTab('blockers')}
         >
-          <span className="tab-icon">⚙️</span> System Architecture
+          <span className="tab-icon">🛑</span> Blockers &amp; Actions
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'docs' ? 'active' : ''}`}
+          onClick={() => setActiveTab('docs')}
+        >
+          <span className="tab-icon">📄</span> Generated Documentation
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'chat' ? 'active' : ''}`}
+          onClick={() => setActiveTab('chat')}
+        >
+          <span className="tab-icon">🤖</span> AI Assistant
         </button>
       </nav>
 
@@ -99,23 +112,33 @@ export default function App() {
             onDocumentsUpdated={handleDocumentsUpdated}
             refreshKey={dashboardRefreshKey}
             documentCount={documents.length}
-            onNavigateUpload={() => setActiveTab('upload')}
+            onNavigateTab={setActiveTab}
+            onNavigateUpload={() => setActiveTab('documents')}
           />
         )}
-        {activeTab === 'upload' && (
-          <DocumentUpload onUploadSuccess={handleUploadSuccess} />
-        )}
-        {activeTab === 'list' && (
-          <DocumentList
+        {activeTab === 'documents' && (
+          <DocumentsView
             documents={documents}
-            onDocumentDeleted={handleDocumentsUpdated}
+            onDocumentsUpdated={handleDocumentsUpdated}
+            onUploadSuccess={handleUploadSuccess}
           />
         )}
-        {activeTab === 'search' && (
-          <SemanticSearch documents={documents} />
+        {activeTab === 'scope' && (
+          <ScopeDeliverablesView />
         )}
-        {activeTab === 'architecture' && (
-          <SystemArchitecture architectureInfo={architectureInfo} />
+        {activeTab === 'risk' && (
+          <RiskAnalysisView
+            onRefreshDashboard={handleDocumentsUpdated}
+          />
+        )}
+        {activeTab === 'blockers' && (
+          <BlockersActionsView />
+        )}
+        {activeTab === 'docs' && (
+          <GeneratedDocsView />
+        )}
+        {activeTab === 'chat' && (
+          <ChatAssistantView />
         )}
       </main>
     </div>

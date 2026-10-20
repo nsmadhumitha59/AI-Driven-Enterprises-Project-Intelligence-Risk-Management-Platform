@@ -129,6 +129,18 @@ export async function getKnowledgeStats() {
   return res.json();
 }
 
+export async function getRiskMatrix(queryContext = null) {
+  const payload = {};
+  if (queryContext) payload.query_context = queryContext;
+  const res = await fetch(`${API_BASE}/m4/risk-matrix`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Failed to fetch 5x5 risk matrix');
+  return res.json();
+}
+
 // ==========================================
 // Multi-Agent & Documentation APIs
 // ==========================================

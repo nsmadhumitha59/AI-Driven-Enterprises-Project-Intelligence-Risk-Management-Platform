@@ -1528,7 +1528,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
 
             <!-- Interactive Canvas Container -->
-            <div class="matrix-canvas-wrapper" id="matrixCanvasWrapper">
+            <div class="matrix-canvas-wrapper risk-matrix" id="matrixCanvasWrapper">
               <svg viewBox="0 0 ${SVG_WIDTH} ${SVG_HEIGHT}" class="matrix-svg-graph" id="matrixSvg">
                 <defs>
                   <linearGradient id="gradTopRight" x1="0%" y1="0%" x2="100%" y2="100%">

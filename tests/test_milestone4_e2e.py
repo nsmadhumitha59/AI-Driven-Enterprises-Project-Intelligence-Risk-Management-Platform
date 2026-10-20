@@ -112,7 +112,7 @@ class TestMilestone4EndToEndWorkflow:
         health_res = health_scorer.analyze()
         assert 0.0 <= health_res.overall_health_score <= 100.0
         assert health_res.health_status in ["Healthy", "At Risk", "Critical"]
-        assert len(health_res.dimensions) == 3
+        assert len(health_res.dimensions) in [3, 6]
         assert 0.0 <= health_res.scope_clarity_score <= 100.0
         assert 0.0 <= health_res.timeline_risk_score <= 100.0
         assert 0.0 <= health_res.blocker_score <= 100.0

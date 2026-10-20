@@ -35,9 +35,11 @@ class UserStory(BaseModel):
     as_a: str
     i_want: str
     so_that: str
+    user_story_description: Optional[str] = None
     acceptance_criteria: List[str] = Field(default_factory=list)
     priority: str = "Medium"  # High, Medium, Low
     category: str = "Functional"  # Functional, Technical, Operations, Risk Mitigation
+    status: str = "Ready"  # Ready, Planned, In Progress, Done
     source_document: str = "unknown"
     source_reference: Optional[SourceReference] = None
 
@@ -47,9 +49,14 @@ class RiskRegisterEntry(BaseModel):
     risk_title: str
     category: str = "Operational"  # Schedule, Dependency, Staffing, Technology, Safety, Operational
     severity: str = "Medium"        # Critical, High, Medium, Low
-    likelihood: str = "Medium"      # High, Medium, Low
-    impact: str = "Medium"          # High, Medium, Low
+    likelihood: str = "Medium"      # High, Medium, Low (alias for probability)
+    probability: str = "Medium"     # Rare, Unlikely, Possible, Likely, Almost Certain
+    probability_rating: Optional[int] = Field(default=None, description="1-5 rating")
+    impact: str = "Medium"          # Very Low, Low, Moderate, High, Very High
+    impact_rating: Optional[int] = Field(default=None, description="1-5 rating")
+    risk_score: Optional[int] = Field(default=None, description="Score = Probability × Impact (1-25)")
     description: str
+    risk_description: Optional[str] = None
     mitigation_strategy: str
     contingency_plan: Optional[str] = None
     owner: str = "Unassigned"
@@ -60,9 +67,13 @@ class RiskRegisterEntry(BaseModel):
 
 class ActionItemDocumentEntry(BaseModel):
     item_id: str = Field(default_factory=lambda: f"ACT-{uuid.uuid4().hex[:6].upper()}")
+    action_id: Optional[str] = None
     task_description: str
+    description: Optional[str] = None
     assignee: str = "Unassigned"
+    assigned_person: Optional[str] = None
     target_date: Optional[str] = None
+    due_date: Optional[str] = None
     priority: str = "Medium"  # High, Medium, Low
     status: str = "Open"      # Open, Pending, In Progress, Completed
     context: Optional[str] = None
@@ -190,9 +201,11 @@ class DocumentationGenerationAgent(BaseAgent):
                     as_a=persona,
                     i_want=f"to execute and verify '{d_name}'",
                     so_that=benefit,
+                    user_story_description=f"As a {persona}, I want to execute and verify '{d_name}', so that {benefit}.",
                     acceptance_criteria=acceptance_criteria,
                     priority=prio,
                     category=cat,
+                    status="Ready",
                     source_document=d.source_document,
                     source_reference=d.source_reference
                 )
@@ -209,12 +222,14 @@ class DocumentationGenerationAgent(BaseAgent):
                         as_a=persona,
                         i_want=f"the system to achieve: {g_stmt}",
                         so_that="the initiative delivers on its primary project objectives",
+                        user_story_description=f"As a {persona}, I want the system to achieve: {g_stmt}, so that the initiative delivers on its primary project objectives.",
                         acceptance_criteria=[
                             f"System demonstrably fulfills: {g_stmt}",
                             "All integration and operational checks pass successfully"
                         ],
                         priority="High",
                         category=g.category.title(),
+                        status="Ready",
                         source_document=g.source_document,
                         source_reference=g.source_reference
                     )
@@ -242,15 +257,15 @@ class DocumentationGenerationAgent(BaseAgent):
             cat_raw = getattr(r, 'category', 'Operational')
             cat_str = cat_raw.value if hasattr(cat_raw, 'value') else str(cat_raw)
 
-            # Derive likelihood and impact
-            if sev == "Critical":
-                likelihood, impact = "High", "High"
-            elif sev == "High":
-                likelihood, impact = "Medium", "High"
-            elif sev == "Medium":
-                likelihood, impact = "Medium", "Medium"
-            else:
-                likelihood, impact = "Low", "Low"
+            # Derive likelihood and impact ratings (1-5) and labels
+            p_rating = getattr(r, 'probability_rating', None) or (5 if sev == "Critical" else 4 if sev == "High" else 3 if sev == "Medium" else 2)
+            i_rating = getattr(r, 'impact_rating', None) or (5 if sev == "Critical" else 4 if sev == "High" else 3 if sev == "Medium" else 2)
+            r_score = getattr(r, 'risk_score', None) or (p_rating * i_rating)
+
+            p_labels = {1: "Rare", 2: "Unlikely", 3: "Possible", 4: "Likely", 5: "Almost Certain"}
+            i_labels = {1: "Very Low", 2: "Low", 3: "Moderate", 4: "High", 5: "Very High"}
+            prob_label = getattr(r, 'probability_label', None) or p_labels.get(p_rating, "Possible")
+            impact_label = getattr(r, 'impact_label', None) or i_labels.get(i_rating, "Moderate")
 
             reason_str = getattr(r, 'reason', None) or getattr(r, 'rationale', '')
             mitigation = getattr(r, 'suggested_mitigation', None) or getattr(r, 'mitigation_recommendation', None) or f"Monitor {cat_str} closely and establish contingency arrangements."
@@ -258,12 +273,18 @@ class DocumentationGenerationAgent(BaseAgent):
 
             register.append(
                 RiskRegisterEntry(
+                    risk_id=getattr(r, 'risk_id', None) or f"RSK-{uuid.uuid4().hex[:6].upper()}",
                     risk_title=r.title,
                     category=cat_str,
                     severity=sev,
-                    likelihood=likelihood,
-                    impact=impact,
+                    likelihood=prob_label,
+                    probability=prob_label,
+                    probability_rating=p_rating,
+                    impact=impact_label,
+                    impact_rating=i_rating,
+                    risk_score=r_score,
                     description=reason_str,
+                    risk_description=reason_str,
                     mitigation_strategy=mitigation,
                     contingency_plan=contingency,
                     owner="Risk Lead / Assigned Owner",
@@ -290,12 +311,18 @@ class DocumentationGenerationAgent(BaseAgent):
         for act in blocker_data.action_items:
             prio_val = act.priority.value if hasattr(act.priority, 'value') else str(act.priority).upper()
             prio = "High" if prio_val in ["P0", "P1", "CRITICAL", "HIGH"] else "Medium" if prio_val in ["P2", "MEDIUM"] else "Low"
+            act_id = getattr(act, 'action_id', None) or f"ACT-{uuid.uuid4().hex[:6].upper()}"
 
             action_items.append(
                 ActionItemDocumentEntry(
+                    item_id=act_id,
+                    action_id=act_id,
                     task_description=act.task_description,
+                    description=act.task_description,
                     assignee=act.assignee if act.assignee else "Unassigned",
+                    assigned_person=act.assignee if act.assignee else "Unassigned",
                     target_date=act.due_date,
+                    due_date=act.due_date,
                     priority=prio,
                     status=act.status.title() if act.status else "Open",
                     context=act.supporting_context,
@@ -306,11 +333,17 @@ class DocumentationGenerationAgent(BaseAgent):
 
         # 2. Blockers as Urgent Action Items
         for blk in blocker_data.active_blockers:
+            blk_act_id = f"ACT-BLK-{uuid.uuid4().hex[:5].upper()}"
             action_items.append(
                 ActionItemDocumentEntry(
+                    item_id=blk_act_id,
+                    action_id=blk_act_id,
                     task_description=f"Resolve Blocker: {blk.description}",
+                    description=f"Resolve Blocker: {blk.description}",
                     assignee=blk.owner if blk.owner and blk.owner != "Unassigned" else "Team Lead",
+                    assigned_person=blk.owner if blk.owner and blk.owner != "Unassigned" else "Team Lead",
                     target_date="Immediate / Next Sprint",
+                    due_date="Immediate / Next Sprint",
                     priority="High",
                     status="Open",
                     context=f"Blocker Category: {blk.category}. Related dependency: {blk.related_dependency or 'N/A'}",

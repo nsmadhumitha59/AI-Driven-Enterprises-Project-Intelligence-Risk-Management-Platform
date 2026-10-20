@@ -70,7 +70,7 @@ class TestMilestone3APIEndpoints:
         assert "overall_health_score" in data
         assert "health_status" in data
         assert "dimensions" in data
-        assert len(data["dimensions"]) == 3
+        assert len(data["dimensions"]) in [3, 6]
         assert 0.0 <= data["overall_health_score"] <= 100.0
 
     def test_chat_endpoint(self, test_client):

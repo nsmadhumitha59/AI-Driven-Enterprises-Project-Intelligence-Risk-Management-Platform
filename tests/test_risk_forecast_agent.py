@@ -77,3 +77,40 @@ class TestRiskForecastAgent:
             ]
         assert "quadrant_counts" in result.risk_matrix
         assert result.risk_matrix["total_plotted"] >= 3
+
+        # Verify 5x5 Enterprise Risk Matrix Heatmap structure & 25 cells
+        assert "grid" in result.matrix_5x5
+        assert len(result.matrix_5x5["grid"]) == 5  # 5 probability rows
+        total_cells = sum(len(row) for row in result.matrix_5x5["grid"])
+        assert total_cells == 25  # Exactly 25 cells
+
+        # Verify formula: Score = Probability * Impact and severity threshold mapping
+        for row in result.matrix_5x5["grid"]:
+            for cell in row:
+                p = cell["probability"]
+                i = cell["impact"]
+                assert 1 <= p <= 5
+                assert 1 <= i <= 5
+                expected_score = p * i
+                assert cell["score"] == expected_score
+                if expected_score >= 17:
+                    assert cell["severity"] == "Critical"
+                    assert cell["color"] == "#ef4444"
+                elif expected_score >= 10:
+                    assert cell["severity"] == "High"
+                    assert cell["color"] == "#f97316"
+                elif expected_score >= 5:
+                    assert cell["severity"] == "Medium"
+                    assert cell["color"] == "#f59e0b"
+                else:
+                    assert cell["severity"] == "Low"
+                    assert cell["color"] == "#10b981"
+
+        # Verify detected risks have discrete 1-5 ratings and calculated scores
+        for r in result.detected_risks:
+            if not r.is_unscored:
+                assert 1 <= r.probability_rating <= 5
+                assert 1 <= r.impact_rating <= 5
+                assert r.risk_score == r.probability_rating * r.impact_rating
+                assert r.severity in ["Critical", "High", "Medium", "Low"]
+

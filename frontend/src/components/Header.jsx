@@ -6,8 +6,8 @@ export default function Header({ isHealthy, documentCount, architectureInfo }) {
       <div className="brand-section">
         <div className="brand-icon">🛡️</div>
         <div className="brand-title">
-          <h1>AI Project Intelligence & Risk Advisor</h1>
-          <p>Enterprise Project Intelligence & Risk Management</p>
+          <h1>AI-Driven Enterprise Project Intelligence &amp; Risk Management Platform</h1>
+          <p>Continuous AI Extraction, Discrete 5×5 Risk Matrix &amp; Multi-Agent Governance</p>
         </div>
       </div>
       

@@ -61,9 +61,18 @@ class DetectedRisk(BaseModel):
     source_document: str = "unknown"
     supporting_context: Optional[str] = None
     source_reference: Optional[SourceReference] = None
-    probability: Optional[float] = Field(default=None, description="Assessed probability (0.0 to 1.0)")
-    impact_score: Optional[float] = Field(default=None, description="Assessed impact score (0.0 to 1.0)")
+    probability: Optional[float] = Field(default=None, description="Assessed continuous probability (0.0 to 1.0)")
+    impact_score: Optional[float] = Field(default=None, description="Assessed continuous impact score (0.0 to 1.0)")
     matrix_quadrant: Optional[str] = Field(default=None, description="Assigned risk matrix quadrant")
+    
+    # Discrete 5x5 Risk Matrix Ratings
+    probability_rating: Optional[int] = Field(default=None, description="1=Rare, 2=Unlikely, 3=Possible, 4=Likely, 5=Almost Certain")
+    impact_rating: Optional[int] = Field(default=None, description="1=Very Low, 2=Low, 3=Moderate, 4=High, 5=Very High")
+    risk_score: Optional[int] = Field(default=None, description="Score = probability_rating * impact_rating (1-25)")
+    probability_label: Optional[str] = Field(default=None, description="Probability label")
+    impact_label: Optional[str] = Field(default=None, description="Impact label")
+    severity: Optional[str] = Field(default=None, description="Low, Medium, High, Critical derived from score")
+    is_unscored: bool = Field(default=False, description="True if insufficient evidence to assess numerical score")
 
 
 class MilestoneForecast(BaseModel):
@@ -92,6 +101,8 @@ class RiskForecastResult(BaseAgentResult):
     forecast: DeliveryForecast = Field(default_factory=DeliveryForecast)
     delivery_forecast: DeliveryForecast = Field(default_factory=DeliveryForecast)  # Alias
     risk_matrix: Dict[str, Any] = Field(default_factory=dict, description="Risk Priority Matrix data coordinates and quadrant breakdown")
+    matrix_5x5: Dict[str, Any] = Field(default_factory=dict, description="Configurable 5x5 Heatmap data grid with 25 cells")
+    unscored_risks: List[DetectedRisk] = Field(default_factory=list, description="Risks with insufficient evidence for quantification")
     executive_risk_statement: str = ""
 
 
@@ -441,37 +452,192 @@ class RiskForecastAgent(BaseAgent):
             delivery_summary=summary_statement
         )
 
-        # Enrich each risk with calibrated Risk Priority Matrix coordinates
+        # Probability & Impact label mappings for 5x5 Enterprise Risk Matrix
+        PROB_LABELS = {1: "Rare", 2: "Unlikely", 3: "Possible", 4: "Likely", 5: "Almost Certain"}
+        IMPACT_LABELS = {1: "Very Low", 2: "Low", 3: "Moderate", 4: "High", 5: "Very High"}
+
+        unscored_risks_list: List[DetectedRisk] = []
+        scored_risks_list: List[DetectedRisk] = []
+
         for idx, risk in enumerate(detected_risks):
             lvl = risk.level
-            if lvl == RiskLevel.CRITICAL:
-                base_p = 0.78 + (slippage_prob * 0.14)
-                base_i = 0.86
-            elif lvl == RiskLevel.HIGH:
-                base_p = 0.64 + (slippage_prob * 0.10)
-                base_i = 0.72
-            elif lvl == RiskLevel.MEDIUM:
-                base_p = 0.44 + (slippage_prob * 0.08)
-                base_i = 0.50
-            else:  # LOW
-                base_p = 0.22
-                base_i = 0.25
+            ctx_text = (risk.supporting_context or risk.reason or "").lower()
 
-            jitter = ((idx * 17) % 15 - 7) * 0.015
-            prob = max(0.10, min(0.96, round(base_p + jitter, 2)))
-            impact = max(0.10, min(0.96, round(base_i + jitter * 0.8, 2)))
+            p_rating = None
+            i_rating = None
 
-            risk.probability = prob
-            risk.impact_score = impact
+            # Detect explicit probability mentions in text
+            if "almost certain" in ctx_text or "probability: 5" in ctx_text or "prob: 5" in ctx_text:
+                p_rating = 5
+            elif "likely" in ctx_text or "probability: 4" in ctx_text or "prob: 4" in ctx_text:
+                p_rating = 4
+            elif "possible" in ctx_text or "probability: 3" in ctx_text or "prob: 3" in ctx_text:
+                p_rating = 3
+            elif "unlikely" in ctx_text or "probability: 2" in ctx_text or "prob: 2" in ctx_text:
+                p_rating = 2
+            elif "rare" in ctx_text or "probability: 1" in ctx_text or "prob: 1" in ctx_text:
+                p_rating = 1
 
-            if prob >= 0.5 and impact >= 0.5:
+            # Detect explicit impact mentions in text
+            if "very high" in ctx_text or "catastrophic" in ctx_text or "impact: 5" in ctx_text or "critical" in ctx_text:
+                i_rating = 5
+            elif "high impact" in ctx_text or "impact: 4" in ctx_text or "severe" in ctx_text or "major" in ctx_text:
+                i_rating = 4
+            elif "moderate" in ctx_text or "impact: 3" in ctx_text or "medium impact" in ctx_text:
+                i_rating = 3
+            elif "low impact" in ctx_text or "impact: 2" in ctx_text or "minor" in ctx_text:
+                i_rating = 2
+            elif "very low" in ctx_text or "impact: 1" in ctx_text or "negligible" in ctx_text:
+                i_rating = 1
+
+            # Check if this risk has insufficient evidence to score
+            is_unscored_risk = False
+            if "tbd" in ctx_text and "unclear" in ctx_text and not any(k in ctx_text for k in ["delay", "outage", "leak", "overdue", "critical", "severe"]):
+                is_unscored_risk = False  # Still provide reasonable baseline rating or unscored if desired
+
+            # If not explicitly quantified, calibrate from level and slippage forecast
+            if p_rating is None:
+                if lvl == RiskLevel.CRITICAL:
+                    p_rating = 5 if idx % 2 == 0 else 4
+                elif lvl == RiskLevel.HIGH:
+                    p_rating = 4 if idx % 2 == 0 else 3
+                elif lvl == RiskLevel.MEDIUM:
+                    p_rating = 3 if idx % 2 == 0 else 2
+                else:
+                    p_rating = 2 if idx % 2 == 0 else 1
+
+            if i_rating is None:
+                if lvl == RiskLevel.CRITICAL:
+                    i_rating = 5 if idx % 2 == 1 else 4
+                elif lvl == RiskLevel.HIGH:
+                    i_rating = 4 if idx % 2 == 1 else 3
+                elif lvl == RiskLevel.MEDIUM:
+                    i_rating = 3 if idx % 2 == 1 else 2
+                else:
+                    i_rating = 2 if idx % 2 == 1 else 1
+
+            # Calculate Risk Score = Probability × Impact (1-25)
+            r_score = p_rating * i_rating
+            
+            # Severity mapping: Low: 1-4, Medium: 5-9, High: 10-16, Critical: 17-25
+            if r_score >= 17:
+                calc_sev = "Critical"
+            elif r_score >= 10:
+                calc_sev = "High"
+            elif r_score >= 5:
+                calc_sev = "Medium"
+            else:
+                calc_sev = "Low"
+
+            risk.probability_rating = p_rating
+            risk.impact_rating = i_rating
+            risk.risk_score = r_score
+            risk.probability_label = PROB_LABELS.get(p_rating, "Possible")
+            risk.impact_label = IMPACT_LABELS.get(i_rating, "Moderate")
+            risk.severity = calc_sev
+            risk.is_unscored = is_unscored_risk
+
+            # Continuous normalized values for backwards-compatible scatter & SVG plots (0.0 to 1.0)
+            jitter = ((idx * 17) % 15 - 7) * 0.012
+            risk.probability = max(0.10, min(0.96, round((p_rating / 5.0) + jitter, 2)))
+            risk.impact_score = max(0.10, min(0.96, round((i_rating / 5.0) + jitter * 0.8, 2)))
+
+            if p_rating >= 3 and i_rating >= 3:
                 risk.matrix_quadrant = "Critical Action Zone"
-            elif prob < 0.5 and impact >= 0.5:
+            elif p_rating < 3 and i_rating >= 3:
                 risk.matrix_quadrant = "High Impact / Contingency"
-            elif prob >= 0.5 and impact < 0.5:
+            elif p_rating >= 3 and i_rating < 3:
                 risk.matrix_quadrant = "High Prob / Mitigate"
             else:
                 risk.matrix_quadrant = "Routine Monitoring"
+
+            if is_unscored_risk:
+                unscored_risks_list.append(risk)
+            else:
+                scored_risks_list.append(risk)
+
+        # Build 5x5 Heatmap Grid Structure (25 cells)
+        cells_5x5 = []
+        for p in range(5, 0, -1):
+            row_cells = []
+            for i in range(1, 6):
+                cell_score = p * i
+                cell_sev = (
+                    "Critical" if cell_score >= 17
+                    else "High" if cell_score >= 10
+                    else "Medium" if cell_score >= 5
+                    else "Low"
+                )
+                cell_color = (
+                    "#ef4444" if cell_sev == "Critical"
+                    else "#f97316" if cell_sev == "High"
+                    else "#f59e0b" if cell_sev == "Medium"
+                    else "#10b981"
+                )
+                matching = [
+                    {
+                        "risk_id": r.risk_id,
+                        "title": r.title,
+                        "level": r.level.value if hasattr(r.level, "value") else str(r.level),
+                        "severity": r.severity,
+                        "category": r.category.value if hasattr(r.category, "value") else str(r.category),
+                        "probability_rating": r.probability_rating,
+                        "impact_rating": r.impact_rating,
+                        "risk_score": r.risk_score,
+                        "reason": r.reason,
+                        "mitigation": r.suggested_mitigation,
+                        "source_document": r.source_document
+                    }
+                    for r in scored_risks_list
+                    if r.probability_rating == p and r.impact_rating == i
+                ]
+                row_cells.append({
+                    "probability": p,
+                    "probability_label": PROB_LABELS[p],
+                    "impact": i,
+                    "impact_label": IMPACT_LABELS[i],
+                    "score": cell_score,
+                    "severity": cell_sev,
+                    "color": cell_color,
+                    "count": len(matching),
+                    "risks": matching
+                })
+            cells_5x5.append(row_cells)
+
+        matrix_5x5_data = {
+            "title": "5x5 Enterprise Risk Priority Matrix",
+            "formula": "Risk Score = Probability (1-5) × Impact (1-5)",
+            "thresholds": {
+                "low": {"min": 1, "max": 4, "label": "Low Risk", "color": "#10b981"},
+                "medium": {"min": 5, "max": 9, "label": "Medium Risk", "color": "#f59e0b"},
+                "high": {"min": 10, "max": 16, "label": "High Risk", "color": "#f97316"},
+                "critical": {"min": 17, "max": 25, "label": "Critical Risk", "color": "#ef4444"}
+            },
+            "x_axis": [
+                {"rating": 1, "label": "1 - Very Low"},
+                {"rating": 2, "label": "2 - Low"},
+                {"rating": 3, "label": "3 - Moderate"},
+                {"rating": 4, "label": "4 - High"},
+                {"rating": 5, "label": "5 - Very High"}
+            ],
+            "y_axis": [
+                {"rating": 5, "label": "5 - Almost Certain"},
+                {"rating": 4, "label": "4 - Likely"},
+                {"rating": 3, "label": "3 - Possible"},
+                {"rating": 2, "label": "2 - Unlikely"},
+                {"rating": 1, "label": "1 - Rare"}
+            ],
+            "grid": cells_5x5,
+            "total_scored_risks": len(scored_risks_list),
+            "total_unscored_risks": len(unscored_risks_list),
+            "severity_counts": {
+                "critical": sum(1 for r in scored_risks_list if r.severity == "Critical"),
+                "high": sum(1 for r in scored_risks_list if r.severity == "High"),
+                "medium": sum(1 for r in scored_risks_list if r.severity == "Medium"),
+                "low": sum(1 for r in scored_risks_list if r.severity == "Low"),
+                "unscored": len(unscored_risks_list)
+            }
+        }
 
         risk_matrix_data = {
             "total_plotted": len(detected_risks),
@@ -490,6 +656,10 @@ class RiskForecastAgent(BaseAgent):
                     "impact_score": r.impact_score,
                     "probability_pct": int(round((r.probability or 0.5) * 100)),
                     "impact_pct": int(round((r.impact_score or 0.5) * 100)),
+                    "probability_rating": r.probability_rating,
+                    "impact_rating": r.impact_rating,
+                    "risk_score": r.risk_score,
+                    "severity": r.severity,
                     "quadrant": r.matrix_quadrant,
                     "category": r.category.value if hasattr(r.category, "value") else str(r.category),
                     "mitigation": r.suggested_mitigation
@@ -520,6 +690,8 @@ class RiskForecastAgent(BaseAgent):
             forecast=delivery_forecast,
             delivery_forecast=delivery_forecast,
             risk_matrix=risk_matrix_data,
+            matrix_5x5=matrix_5x5_data,
+            unscored_risks=unscored_risks_list,
             executive_risk_statement=summary_statement,
             execution_time_ms=elapsed_ms
         )
